@@ -7,6 +7,7 @@ import { ApiError, post } from '../lib/api'
 import { formattedCpf, formatDate, formatDateTime, age, or, appointmentStatus, examStatus } from '../lib/format'
 import { useSession } from '../lib/session'
 import { useApi } from '../lib/useApi'
+import { HealthBackgroundView } from '../components/HealthBackground'
 
 type Row = Record<string, unknown>
 
@@ -22,6 +23,7 @@ interface RecordData {
   vaccines: Row[]
   clinical_access: boolean
   last_triage: Row | null
+  background: Row | null
 }
 
 export default function PatientRecord() {
@@ -102,10 +104,12 @@ export default function PatientRecord() {
             <dl>
               {row('Nome civil', String(p.nome))}
               {p.nome_social ? row('Nome social', String(p.nome_social)) : null}
+              {row('Nome da mãe', or(p.nome_mae))}
               {row('Nascimento', <span className="num">{formatDate(p.data_nascimento)} · {age(p.data_nascimento)} anos</span>)}
               {row('Sexo', SEX[String(p.sexo)] ?? '—')}
               {row('Estado civil', MARITAL[String(p.estado_civil)] ?? '—')}
               {row('Profissão', or(p.profissao))}
+              {row('Naturalidade', or(p.naturalidade))}
               {row('Tipo sanguíneo', or(p.tipo_sanguineo))}
               {row('Cadastrado em', <span className="num">{formatDateTime(p.criado_em)}</span>)}
             </dl>
@@ -115,6 +119,7 @@ export default function PatientRecord() {
               {row('Telefone', <span className="num">{or(p.telefone)}</span>)}
               {row('E-mail', or(p.email))}
               {row('Endereço', or(address))}
+              {p.responsavel_nome ? row('Responsável legal', <>{String(p.responsavel_nome)}{p.responsavel_parentesco ? ` (${p.responsavel_parentesco})` : ''}<span className="num block text-[12px] text-muted">{or(p.responsavel_telefone)}</span></>) : null}
               {row('Emergência', p.contato_emergencia_nome ? <>{String(p.contato_emergencia_nome)}{p.contato_emergencia_parentesco ? ` (${p.contato_emergencia_parentesco})` : ''}<span className="num block text-[12px] text-muted">{or(p.contato_emergencia_telefone)}</span></> : '—')}
             </dl>
           </Panel>
@@ -144,6 +149,11 @@ export default function PatientRecord() {
                   </div>
                 </>
               )}
+            </Panel>
+          )}
+          {data.clinical_access && (
+            <Panel title="Antecedentes e hábitos" meta="registrados pelo médico" delay={0.08}>
+              <HealthBackgroundView background={data.background} />
             </Panel>
           )}
           <Panel title="Consultas e exames" meta={`${data.history.length} registros · mais recentes primeiro`} noPadding delay={0.1}>

@@ -6,17 +6,24 @@ import { Alert, TextArea, Button, ButtonLink, PageHeader, Field, Loading, Input,
 import { ApiError, post } from '../lib/api'
 import { formatDate, formatDateTime, formatTime, age, appointmentStatus } from '../lib/format'
 import { useApi } from '../lib/useApi'
+import { HealthBackgroundForm, HealthBackgroundView } from '../components/HealthBackground'
 
 type Row = Record<string, unknown>
-interface Data { appointment: Row; triage: Row | null; allergies: Row[]; progress_notes: Row[]; versions: number; prescriptions: Row[]; exam_requests: Row[]; previous_records: Row[] }
+interface Data { appointment: Row; triage: Row | null; allergies: Row[]; background: Row | null; progress_notes: Row[]; versions: number; prescriptions: Row[]; exam_requests: Row[]; previous_records: Row[] }
 
-const MEDICAL_RECORD: [string, string, string | null, number][] = [
-  ['queixa_principal', 'Queixa principal', null, 2],
-  ['historia_doenca_atual', 'História da doença atual', null, 4],
-  ['historico_relevante', 'Antecedentes relevantes', 'Doenças prévias, cirurgias, medicamentos em uso.', 3],
-  ['observacoes', 'Exame físico e observações', null, 3],
-  ['hipoteses_diagnosticas', 'Hipóteses diagnósticas', null, 2],
-  ['conduta', 'Conduta', 'Obrigatória para finalizar.', 3],
+/** Record sections in the order of the CFM model: [field, label, help, rows (0 = single line), section]. */
+const MEDICAL_RECORD: [string, string, string | null, number, string][] = [
+  ['queixa_principal', 'Queixa principal (QP)', 'Nas palavras do paciente.', 2, 'Anamnese'],
+  ['historia_doenca_atual', 'História da doença atual (HDA)', 'Início, intensidade, frequência, o que melhora ou piora, tratamentos já tentados.', 4, 'Anamnese'],
+  ['historico_relevante', 'Antecedentes relatados nesta consulta', 'O histórico fixo do paciente fica no quadro "Antecedentes e hábitos".', 2, 'Anamnese'],
+  ['revisao_sistemas', 'Revisão por sistemas', 'Respiratório, cardiovascular, digestivo, urinário, neurológico...', 3, 'Anamnese'],
+  ['exame_fisico', 'Exame físico', 'Achados do exame clínico. Os sinais vitais da triagem estão ao lado.', 4, 'Exame físico'],
+  ['observacoes', 'Outras observações', null, 2, 'Exame físico'],
+  ['hipoteses_diagnosticas', 'Hipóteses diagnósticas', null, 2, 'Diagnóstico'],
+  ['diagnostico', 'Diagnóstico', null, 2, 'Diagnóstico'],
+  ['cid10', 'CID-10', 'Ex.: J06.9', 0, 'Diagnóstico'],
+  ['conduta', 'Plano terapêutico e orientações', 'Obrigatório para finalizar. As prescrições ficam no quadro Receitas.', 3, 'Plano'],
+  ['encaminhamentos', 'Encaminhamentos', 'Especialidade e motivo.', 2, 'Plano'],
 ]
 const EMPTY_ITEM = { medicamento: '', dosagem: '', via: '', frequencia: '', duracao: '', orientacoes: '' }
 const SEX: Record<string, string> = { feminino: 'Feminino', masculino: 'Masculino', outro: 'Outro' }
@@ -94,10 +101,17 @@ export default function EncounterScreen() {
             {c.id_prontuario == null ? <Empty>O prontuário é aberto quando você inicia o atendimento. A queixa da triagem já vem preenchida.</Empty> : (
               <form onSubmit={save} noValidate>
                 <div className="grid gap-4 sm:grid-cols-2">
-                  {MEDICAL_RECORD.map(([k, label, help, rows]) => (
-                    <Field key={k} label={label} name={k} help={help ?? undefined} error={errors[k]} className={rows >= 3 ? 'sm:col-span-2' : ''}>
-                      <TextArea name={k} rows={rows} value={record[k] ?? ''} disabled={!draft} invalid={!!errors[k]} onChange={(e) => setRecord({ ...record, [k]: e.target.value })} />
-                    </Field>
+                  {MEDICAL_RECORD.map(([k, label, help, rows, section], i) => (
+                    <div key={k} className="contents">
+                      {(i === 0 || MEDICAL_RECORD[i - 1][4] !== section) && (
+                        <h3 className="border-b border-line pb-1.5 text-[12px] font-medium tracking-wide text-muted uppercase sm:col-span-2">{section}</h3>
+                      )}
+                      <Field label={label} name={k} help={help ?? undefined} error={errors[k]} className={rows >= 3 ? 'sm:col-span-2' : ''}>
+                        {rows === 0
+                          ? <Input name={k} maxLength={10} value={record[k] ?? ''} disabled={!draft} invalid={!!errors[k]} onChange={(e) => setRecord({ ...record, [k]: e.target.value.toUpperCase() })} />
+                          : <TextArea name={k} rows={rows} value={record[k] ?? ''} disabled={!draft} invalid={!!errors[k]} onChange={(e) => setRecord({ ...record, [k]: e.target.value })} />}
+                      </Field>
+                    </div>
                   ))}
                 </div>
                 {draft && (
@@ -240,13 +254,18 @@ export default function EncounterScreen() {
               </form>
             </Panel>
           )}
+          <Panel title="Antecedentes e hábitos" meta="valem para todos os atendimentos" delay={0.12}>
+            {c.status === 'em_atendimento' || c.status === 'realizada'
+              ? <HealthBackgroundForm encounterId={String(id)} background={data.background} onSaved={reload} />
+              : <HealthBackgroundView background={data.background} />}
+          </Panel>
           <Panel title="Atendimentos anteriores" meta={String(data.previous_records.length)} delay={0.14}>
             {data.previous_records.length === 0 ? <p className="text-muted">Primeiro atendimento finalizado deste paciente.</p> : (
               <ul className="divide-y divide-rule">
                 {data.previous_records.map((a) => (
                   <li key={String(a.id_prontuario)} className="py-3 first:pt-0">
                     <p className="text-[12px] text-muted">{formatDate(a.data_hora)}{a.medico ? ` · ${a.medico}` : ''}</p>
-                    <p className="font-medium">{String(a.hipoteses_diagnosticas ?? a.queixa_principal ?? '')}</p>
+                    <p className="font-medium">{String(a.diagnostico ?? a.hipoteses_diagnosticas ?? a.queixa_principal ?? '')}{a.cid10 ? ` · CID ${a.cid10}` : ''}</p>
                     <p className="text-[13px] text-muted">{String(a.conduta ?? '')}</p>
                   </li>
                 ))}
