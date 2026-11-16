@@ -6,10 +6,13 @@ dist/
 .vite/
 npm-debug.log*
 
-# Ferramentas locais
+# Local tools
 .idea/
 .vscode/
 .claude/
 .claude-mem/
 CLAUDE.md
 .taste-skill/
+
+# Local run guide (kept out of the repository)
+RUNNING.md

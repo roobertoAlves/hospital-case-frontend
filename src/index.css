@@ -4,8 +4,8 @@
 @import "tailwindcss";
 
 /*
-  Asklep - tokens de design. Mesmo desenho das telas do backend (inspirado no nav.dasa):
-  moldura tingida, folha branca, texto quase preto, acento verde-azulado do bastao de Asclepio.
+  Asklep design tokens (inspired by nav.dasa): tinted frame, white sheet, near-black text and the
+  teal accent of the Rod of Asclepius.
 */
 @theme {
   --font-sans: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
