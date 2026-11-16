@@ -18,6 +18,15 @@ const STATUS: Record<string, [string, 'warning' | 'accent' | 'positive']> = {
   fechado: ['Fechado', 'positive'],
 }
 
+/** Teams that receive tickets and the subjects each one handles (codes stored by the backend). */
+const TEAMS: Record<string, { label: string; subjects: Record<string, string> }> = {
+  ti: { label: 'TI', subjects: { acesso: 'Acesso a sistemas', senha: 'Senha e bloqueio de conta', equipamento: 'Computador ou impressora', sistema: 'Erro no sistema', rede: 'Internet e rede', outro: 'Outro assunto' } },
+  produtos: { label: 'Produtos', subjects: { erro: 'Algo não funciona como deveria', melhoria: 'Sugestão de melhoria', duvida: 'Dúvida de uso', outro: 'Outro assunto' } },
+  infraestrutura: { label: 'Infraestrutura e manutenção', subjects: { manutencao: 'Manutenção predial', limpeza: 'Limpeza', materiais: 'Materiais e insumos', outro: 'Outro assunto' } },
+  financeiro: { label: 'Financeiro', subjects: { faturamento: 'Faturamento e convênios', reembolso: 'Reembolso', pagamento: 'Pagamento a fornecedor', outro: 'Outro assunto' } },
+  rh: { label: 'Recursos humanos', subjects: { ponto: 'Ponto e escala', beneficios: 'Benefícios', ferias: 'Férias', outro: 'Outro assunto' } },
+}
+
 /** Support tickets (framework example): everyone opens tickets; the support group moves them along. */
 export default function Tickets() {
   const notify = useNotice()
@@ -25,6 +34,9 @@ export default function Tickets() {
   const { data, loading, error, reload } = useApi<TicketList>('api/tickets')
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
+  const [team, setTeam] = useState('')
+  const [subject, setSubject] = useState('')
+  const [teamFilter, setTeamFilter] = useState('')
   const [sending, setSending] = useState(false)
   const support = inGroup('suporte') || inGroup('admin')
 
@@ -32,10 +44,11 @@ export default function Tickets() {
     e.preventDefault()
     setSending(true)
     try {
-      const r = await post('api/tickets', { titulo: title, descricao: description })
+      const r = await post('api/tickets', { equipe: team, assunto: subject, titulo: title, descricao: description })
       notify(r.message ?? 'Chamado registrado.')
       setTitle('')
       setDescription('')
+      setSubject('')
       reload()
     } catch (err) {
       notify(err instanceof ApiError ? err.message : 'Não foi possível registrar.', false)
@@ -57,10 +70,11 @@ export default function Tickets() {
   if (loading && !data) return <Loading />
   if (error || !data) return <Empty>{error?.message}</Empty>
   const c = data.counts
+  const shown = teamFilter ? data.tickets.filter((t) => t.equipe === teamFilter) : data.tickets
 
   return (
     <>
-      <PageHeader title="Chamados de suporte" subtitle="Abra um chamado para a equipe de suporte e acompanhe o andamento." />
+      <PageHeader title="Chamados de suporte" subtitle="Abra um chamado para a equipe certa (TI, produtos, infraestrutura, financeiro ou RH) e acompanhe o andamento." />
       <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Kpi label="Abertos" value={c.open} highlight />
         <Kpi label="Em andamento" value={c.in_progress} delay={0.05} />
@@ -68,15 +82,21 @@ export default function Tickets() {
         <Kpi label="Total" value={c.total} delay={0.15} />
       </div>
       <div className="grid gap-5 xl:grid-cols-[2fr_1fr]">
-        <Panel title="Chamados" noPadding>
-          {data.tickets.length === 0 ? <div className="p-5"><Empty>Nenhum chamado registrado.</Empty></div> : (
-            <Table header={<><Th>Chamado</Th><Th className="hidden md:table-cell">Solicitante</Th><Th>Situação</Th>{support && <Th />}</>}>
-              {data.tickets.map((t) => {
+        <Panel title="Chamados" noPadding meta={
+          <Select aria-label="Filtrar por equipe" value={teamFilter} onChange={(e) => setTeamFilter(e.target.value)}>
+            <option value="">Todas as equipes</option>
+            {Object.entries(TEAMS).map(([v, t]) => <option key={v} value={v}>{t.label}</option>)}
+          </Select>
+        }>
+          {shown.length === 0 ? <div className="p-5"><Empty>Nenhum chamado registrado.</Empty></div> : (
+            <Table header={<><Th>Chamado</Th><Th className="hidden lg:table-cell">Equipe e assunto</Th><Th className="hidden md:table-cell">Solicitante</Th><Th>Situação</Th>{support && <Th />}</>}>
+              {shown.map((t) => {
                 const [label, tone] = STATUS[String(t.status)] ?? [String(t.status), 'accent']
                 return (
                   <tr key={String(t.id_chamado)}>
                     <Td><Main sub={`nº ${t.id_chamado} · ${formatDateTime(t.aberto_em)}`}>{String(t.titulo)}</Main>
                       {t.descricao ? <p className="mt-1 text-[13px] text-muted">{String(t.descricao)}</p> : null}</Td>
+                    <Td className="hidden lg:table-cell"><Main sub={TEAMS[String(t.equipe)]?.subjects[String(t.assunto)] ?? ''}>{TEAMS[String(t.equipe)]?.label ?? String(t.equipe ?? '')}</Main></Td>
                     <Td className="hidden md:table-cell"><Main sub={String(t.email_solicitante ?? '')}>{String(t.solicitante ?? '')}</Main></Td>
                     <Td><Badge tone={tone}>{label}</Badge></Td>
                     {support && (
@@ -94,13 +114,25 @@ export default function Tickets() {
         </Panel>
         <Panel title="Novo chamado">
           <form onSubmit={create} className="grid gap-4">
+            <Field label="Para qual equipe?" name="equipe" required>
+              <Select name="equipe" value={team} onChange={(e) => { setTeam(e.target.value); setSubject('') }}>
+                <option value="">Escolha a equipe</option>
+                {Object.entries(TEAMS).map(([v, t]) => <option key={v} value={v}>{t.label}</option>)}
+              </Select>
+            </Field>
+            <Field label="Assunto" name="assunto" required>
+              <Select name="assunto" value={subject} disabled={!team} onChange={(e) => setSubject(e.target.value)}>
+                <option value="">{team ? 'Escolha o assunto' : 'Escolha a equipe primeiro'}</option>
+                {team && Object.entries(TEAMS[team].subjects).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+              </Select>
+            </Field>
             <Field label="Título" name="titulo" required>
               <Input name="titulo" maxLength={150} value={title} onChange={(e) => setTitle(e.target.value)} />
             </Field>
             <Field label="Descrição" name="descricao">
               <TextArea name="descricao" rows={5} maxLength={2000} value={description} onChange={(e) => setDescription(e.target.value)} />
             </Field>
-            <Button type="submit" variant="primario" loading={sending} disabled={title.trim().length === 0}>Registrar chamado</Button>
+            <Button type="submit" variant="primario" loading={sending} disabled={!team || !subject || title.trim().length === 0}>Registrar chamado</Button>
           </form>
         </Panel>
       </div>
