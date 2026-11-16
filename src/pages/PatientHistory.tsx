@@ -2,12 +2,20 @@ import { useParams } from 'react-router'
 import { Alert, PageHeader, Loading, Panel, Badge, Priority, Table, Td, Th, Empty } from '../components/ui'
 import { formatDate, formatDateTime, appointmentStatus, examStatus } from '../lib/format'
 import { useApi } from '../lib/useApi'
+import { HealthBackgroundView } from '../components/HealthBackground'
 
 type Row = Record<string, unknown>
 interface Data {
-  patient: Row; level: 'MEDICO' | 'ENFERMAGEM' | 'ADMINISTRATIVO'
-  allergies?: Row[]; medical_records?: Row[]; prescriptions?: Row[]; exam_requests?: Row[]; triages?: Row[]; administrative?: Row[]
+  patient: Row; level: 'DOCTOR' | 'NURSING' | 'ADMINISTRATIVE'
+  allergies?: Row[]; background?: Row | null; medical_records?: Row[]; prescriptions?: Row[]; exam_requests?: Row[]; triages?: Row[]; administrative?: Row[]
 }
+
+/** Medical record sections shown in the history, in the order of the CFM model. */
+const RECORD_SECTIONS: [string, string][] = [
+  ['queixa_principal', 'Queixa principal'], ['historia_doenca_atual', 'História da doença atual'],
+  ['historico_relevante', 'Antecedentes relatados'], ['revisao_sistemas', 'Revisão por sistemas'], ['exame_fisico', 'Exame físico'],
+  ['observacoes', 'Observações'], ['hipoteses_diagnosticas', 'Hipóteses'], ['conduta', 'Plano terapêutico'], ['encaminhamentos', 'Encaminhamentos'],
+]
 
 const n = (v: unknown) => (v == null ? '—' : String(v).replace(/\.0+$/, '').replace('.', ','))
 
@@ -18,8 +26,8 @@ export default function PatientHistory() {
   if (loading && !data) return <Loading />
   if (error || !data) return <Empty>{error?.message ?? 'Histórico indisponível.'}</Empty>
   const p = data.patient
-  const doctor = data.level === 'MEDICO'
-  const clinical = doctor || data.level === 'ENFERMAGEM'
+  const doctor = data.level === 'DOCTOR'
+  const clinical = doctor || data.level === 'NURSING'
   const allergies = data.allergies ?? []
 
   return (
@@ -38,6 +46,11 @@ export default function PatientHistory() {
         </div>
       )}
       <div className="grid gap-5">
+        {clinical && (
+          <Panel title="Antecedentes e hábitos" meta="antecedentes pessoais, hábitos de vida e história familiar">
+            <HealthBackgroundView background={data.background ?? null} />
+          </Panel>
+        )}
         {doctor && (
           <div className="grid gap-5 xl:grid-cols-[2fr_1fr]">
             <Panel title="Atendimentos" meta={`${data.medical_records?.length ?? 0} finalizados`}>
@@ -46,9 +59,12 @@ export default function PatientHistory() {
                   {data.medical_records.map((r, i) => (
                     <li key={i} className="py-3 first:pt-0">
                       <p className="mb-1 text-[12px] text-muted">{formatDate(r.data_hora)} · {String(r.medico)} · {String(r.especialidade)}</p>
-                      <p><strong>Queixa:</strong> {String(r.queixa_principal ?? '—')}</p>
-                      <p><strong>Hipóteses:</strong> {String(r.hipoteses_diagnosticas ?? '—')}</p>
-                      <p className="whitespace-pre-wrap"><strong>Conduta:</strong> {String(r.conduta ?? '—')}</p>
+                      <p className="font-medium">{String(r.diagnostico ?? r.hipoteses_diagnosticas ?? '—')}{r.cid10 ? <span className="num text-muted"> · CID {String(r.cid10)}</span> : null}</p>
+                      <dl className="mt-1.5 grid gap-1 text-[13px]">
+                        {RECORD_SECTIONS.map(([k, label]) => r[k] ? (
+                          <div key={k} className="grid grid-cols-[150px_1fr] gap-2"><dt className="text-muted">{label}</dt><dd className="whitespace-pre-wrap">{String(r[k])}</dd></div>
+                        ) : null)}
+                      </dl>
                     </li>
                   ))}
                 </ul>

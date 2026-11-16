@@ -6,9 +6,9 @@ import { maskCep, maskCpf, maskPhone } from '../lib/masks'
 import { useApi } from '../lib/useApi'
 import { useForm } from '../lib/useForm'
 
-const FIELDS = ['nome', 'nome_social', 'cpf', 'data_nascimento', 'sexo', 'estado_civil', 'profissao', 'tipo_sanguineo', 'telefone', 'email',
-  'cep', 'logradouro', 'numero', 'complemento', 'bairro', 'cidade', 'uf', 'contato_emergencia_nome', 'contato_emergencia_telefone',
-  'contato_emergencia_parentesco', 'convenio', 'numero_carteirinha', 'cartao_sus'] as const
+const FIELDS = ['nome', 'nome_social', 'nome_mae', 'cpf', 'data_nascimento', 'sexo', 'estado_civil', 'profissao', 'naturalidade', 'tipo_sanguineo',
+  'telefone', 'email', 'cep', 'logradouro', 'numero', 'complemento', 'bairro', 'cidade', 'uf', 'contato_emergencia_nome', 'contato_emergencia_telefone',
+  'contato_emergencia_parentesco', 'responsavel_nome', 'responsavel_parentesco', 'responsavel_telefone', 'convenio', 'numero_carteirinha', 'cartao_sus'] as const
 const MARITAL = [['solteiro', 'Solteiro(a)'], ['casado', 'Casado(a)'], ['uniao_estavel', 'União estável'], ['divorciado', 'Divorciado(a)'], ['viuvo', 'Viúvo(a)'], ['nao_informado', 'Prefere não informar']]
 const BLOOD = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
 type Values = Record<(typeof FIELDS)[number], string>
@@ -52,7 +52,8 @@ export default function PatientForm() {
         <FormSection title="Identificação" description="Como o paciente aparece na agenda, nas filas e nos documentos.">
           {input('nome', 'Nome completo', { required: true, width: 'sm:col-span-4', max: 150 })}
           {input('cpf', 'CPF', { required: true, width: 'sm:col-span-2', mask: maskCpf })}
-          {input('nome_social', 'Nome social', { width: 'sm:col-span-4', max: 150, help: 'Como a pessoa prefere ser chamada.' })}
+          {input('nome_social', 'Nome social', { width: 'sm:col-span-3', max: 150, help: 'Como a pessoa prefere ser chamada.' })}
+          {input('nome_mae', 'Nome da mãe', { width: 'sm:col-span-3', max: 150 })}
           {input('data_nascimento', 'Data de nascimento', { required: true, width: 'sm:col-span-2', inputType: 'date' })}
           <Field label="Sexo" name="sexo" error={f.errors.sexo} help="Só quando necessário ao atendimento." className="sm:col-span-2">
             <Select name="sexo" value={f.values.sexo} onChange={(e) => f.change('sexo', e.target.value)}>
@@ -67,6 +68,7 @@ export default function PatientForm() {
             </Select>
           </Field>
           {input('profissao', 'Profissão', { width: 'sm:col-span-2', max: 80 })}
+          {input('naturalidade', 'Naturalidade', { width: 'sm:col-span-2', max: 80, help: 'Cidade/UF de nascimento.' })}
           <Field label="Tipo sanguíneo" name="tipo_sanguineo" error={f.errors.tipo_sanguineo} className="sm:col-span-2">
             <Select name="tipo_sanguineo" value={f.values.tipo_sanguineo} onChange={(e) => f.change('tipo_sanguineo', e.target.value)}>
               <option value="">Não sabe</option>
@@ -91,6 +93,11 @@ export default function PatientForm() {
           {input('contato_emergencia_nome', 'Nome', { width: 'sm:col-span-2', max: 150 })}
           {input('contato_emergencia_parentesco', 'Parentesco', { width: 'sm:col-span-2', max: 40 })}
           {input('contato_emergencia_telefone', 'Telefone', { width: 'sm:col-span-2', mask: maskPhone })}
+        </FormSection>
+        <FormSection title="Responsável legal" description="Obrigatório para menores de idade e pessoas sob tutela.">
+          {input('responsavel_nome', 'Nome', { width: 'sm:col-span-2', max: 150 })}
+          {input('responsavel_parentesco', 'Parentesco', { width: 'sm:col-span-2', max: 40 })}
+          {input('responsavel_telefone', 'Telefone', { width: 'sm:col-span-2', mask: maskPhone })}
         </FormSection>
         <FormSection title="Convênio" description="Deixe em branco para atendimento particular.">
           {input('convenio', 'Convênio', { width: 'sm:col-span-2', max: 80 })}
