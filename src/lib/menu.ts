@@ -1,5 +1,5 @@
 import {
-  CalendarDays, CalendarPlus, ClipboardList, FileText, FlaskConical, HeartPulse, House, IdCard, KeyRound, ListChecks,
+  CalendarDays, CalendarPlus, FileCheck, Syringe, ClipboardList, FileText, FlaskConical, HeartPulse, House, IdCard, KeyRound, ListChecks,
   Search, ShieldCheck, Stethoscope, UserPlus, Users, type LucideIcon,
 } from 'lucide-react'
 
@@ -10,10 +10,12 @@ import {
 export interface ItemMenu { secao: string; rotulo: string; to: string; permissao: string | null; icone: LucideIcon }
 
 export const MENU: ItemMenu[] = [
-  { secao: '', rotulo: 'Início', to: '/', permissao: null, icone: House },
+  { secao: '', rotulo: 'Início', to: '/painel', permissao: null, icone: House },
   { secao: 'Cadastro e agenda', rotulo: 'Pacientes', to: '/pacientes', permissao: 'pacientes.view', icone: Users },
   { secao: 'Cadastro e agenda', rotulo: 'Agenda de consultas', to: '/agenda', permissao: 'agenda.view', icone: CalendarDays },
   { secao: 'Cadastro e agenda', rotulo: 'Agenda de exames', to: '/exames', permissao: 'exames.agenda.view', icone: FlaskConical },
+  { secao: 'Cadastro e agenda', rotulo: 'Pedidos médicos', to: '/pedidos', permissao: 'pedidos.conferir', icone: FileCheck },
+  { secao: 'Cadastro e agenda', rotulo: 'Sala de vacinação', to: '/vacinas', permissao: 'vacinas.agenda.view', icone: Syringe },
   { secao: 'Assistência', rotulo: 'Minha agenda', to: '/agenda', permissao: 'agenda.view.propria', icone: CalendarDays },
   { secao: 'Assistência', rotulo: 'Fila de triagem', to: '/triagem', permissao: 'triagem.fila', icone: HeartPulse },
   { secao: 'Assistência', rotulo: 'Fila de atendimento', to: '/atendimento', permissao: 'atendimento.fila', icone: Stethoscope },

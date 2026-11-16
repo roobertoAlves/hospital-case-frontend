@@ -1,7 +1,8 @@
 import { CalendarPlus, FileText, FlaskConical, Pencil } from 'lucide-react'
+import { useState } from 'react'
 import { useParams } from 'react-router'
 import { useAviso } from '../components/avisos'
-import { Botao, BotaoLink, Cabecalho, Carregando, Painel, Pilula, Tabela, Td, Th, Vazio } from '../components/ui'
+import { Botao, BotaoLink, Cabecalho, Carregando, Entrada, Painel, Pilula, Tabela, Td, Th, Vazio } from '../components/ui'
 import { ApiError, post } from '../lib/api'
 import { cpfFormatado, data, dataHora, idade, ou, situacaoConsulta, situacaoExame } from '../lib/formato'
 import { useSessao } from '../lib/sessao'
@@ -82,6 +83,34 @@ export default function PacienteFicha() {
           )}
         </Painel>
       </div>
+      <ContaPortal idPaciente={String(id)} temConta={p.id_usuario != null} temEmail={!!p.email} aoLigar={recarregar} />
     </>
+  )
+}
+
+/** Situacao da conta do portal; a recepcao liga a conta quando a ficha nao tem e-mail. */
+function ContaPortal({ idPaciente, temConta, temEmail, aoLigar }: { idPaciente: string; temConta: boolean; temEmail: boolean; aoLigar: () => void }) {
+  const { pode } = useSessao()
+  const avisar = useAviso()
+  const [email, setEmail] = useState('')
+  return (
+    <Painel titulo="Portal do paciente" className="mt-5" delay={0.12}>
+      {temConta ? <p><Pilula tom="positive">Conta ativa</Pilula> <span className="ml-2 text-muted">O paciente agenda, confirma e acompanha pelo portal.</span></p> : (
+        <>
+          <p className="text-muted">Sem conta no portal. {temEmail ? 'Ao se cadastrar com o CPF, o paciente recebe um código no e-mail da ficha.' : 'A ficha não tem e-mail: depois que o paciente criar a conta no portal, ligue aqui pelo e-mail de login dele (com documento em mãos).'}</p>
+          {pode('pacientes.vincular_conta') && (
+            <form className="mt-3 flex max-w-[520px] gap-2" onSubmit={async (e) => {
+              e.preventDefault()
+              try { const r = await post(`api/pacientes/${idPaciente}/conta`, { email }); avisar(r.message ?? 'Conta ligada.'); aoLigar() }
+              catch (err) { avisar(err instanceof ApiError ? err.message : 'Não foi possível ligar.', false) }
+            }}>
+              <label htmlFor="emailConta" className="sr-only">E-mail da conta do portal</label>
+              <Entrada id="emailConta" type="email" placeholder="E-mail de login do paciente no portal" value={email} onChange={(e) => setEmail(e.target.value)} />
+              <Botao type="submit" disabled={!email.includes('@')}>Ligar conta</Botao>
+            </form>
+          )}
+        </>
+      )}
+    </Painel>
   )
 }

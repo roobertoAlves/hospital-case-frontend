@@ -15,7 +15,7 @@ const DESTAQUES = [
 ]
 
 /** Moldura das telas publicas: marca a esquerda, formulario a direita. */
-function TelaPublica({ titulo, subtitulo, children }: { titulo: string; subtitulo?: string; children: ReactNode }) {
+export function TelaPublica({ titulo, subtitulo, children }: { titulo: string; subtitulo?: string; children: ReactNode }) {
   return (
     <div className="grid min-h-screen lg:grid-cols-[1.05fr_1fr]">
       <section className="relative hidden overflow-hidden bg-brand-900 p-12 text-white lg:flex lg:flex-col">
@@ -77,7 +77,7 @@ export function Login() {
     setEnviando(true)
     try {
       const u = await entrar(email.trim(), senha)
-      navigate(u?.primeiro_acesso ? '/trocar-senha' : '/', { replace: true })
+      navigate(u?.primeiro_acesso ? '/trocar-senha' : u?.grupos.includes('paciente') ? '/minha-saude' : '/painel', { replace: true })
     } catch (err) {
       setErro(err instanceof ApiError ? err.message : 'Não foi possível entrar.')
     } finally {
@@ -97,11 +97,12 @@ export function Login() {
         </Campo>
         <Botao type="submit" variante="primario" carregando={enviando} className="mt-2 h-11">Entrar</Botao>
         <Link to="/recuperar-senha" className="text-center text-[13px] text-brand-700 hover:underline">Esqueci minha senha</Link>
+        <p className="border-t border-line pt-4 text-center text-[13px] text-muted">É paciente e ainda não tem conta? <Link to="/cadastro" className="font-medium text-brand-700 hover:underline">Criar conta</Link></p>
+        <Link to="/" className="text-center text-[13px] text-muted hover:text-ink">Voltar ao site</Link>
       </form>
       <div className="mt-10 rounded-[var(--radius-card)] bg-raised p-4 text-[12px] leading-relaxed text-muted">
         <p className="mb-1 flex items-center gap-1.5 font-medium text-ink"><Stethoscope className="size-3.5" /> Ambiente de demonstração</p>
-        recepcao@hospital.local · enfermeiro@hospital.local · medico@hospital.local · admin@hospital.local
-        <br />Senhas: recepcao123, enfermeiro123, medico123, admin123 (dados fictícios).
+        Paciente: paciente@hospital.local / paciente123<br />Equipe: recepcao@, enfermeiro@, medico@, admin@hospital.local<br />Senhas: recepcao123, enfermeiro123, medico123, admin123 (dados fictícios).
       </div>
     </TelaPublica>
   )

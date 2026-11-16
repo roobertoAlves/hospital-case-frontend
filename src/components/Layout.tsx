@@ -24,14 +24,14 @@ function MenuLateral({ aoNavegar }: { aoNavegar?: () => void }) {
   )
   return (
     <div className="flex h-full flex-col px-3 py-4">
-      <NavLink to="/" className="mb-5 px-2" onClick={aoNavegar}><Logo /></NavLink>
+      <NavLink to="/painel" className="mb-5 px-2" onClick={aoNavegar}><Logo /></NavLink>
       <p className="mb-3 px-3 text-[13px] text-muted">Olá, <strong className="text-ink">{usuario?.nome.split(' ')[0]}</strong></p>
       <nav className="flex grow flex-col gap-0.5 overflow-y-auto" aria-label="Menu principal">
         {secoes.map(([secao, lista]) => (
           <div key={secao || 'inicio'} className="mb-2">
             {secao && <p className="mt-2 mb-1 px-3 text-[11px] font-medium tracking-wide text-faint uppercase">{secao}</p>}
             {lista.map((i) => (
-              <NavLink key={i.rotulo} to={i.to} end={i.to === '/'} className={classe} onClick={aoNavegar}>
+              <NavLink key={i.rotulo} to={i.to} end={i.to === '/painel'} className={classe} onClick={aoNavegar}>
                 <i.icone className="size-[18px]" /> {i.rotulo}
               </NavLink>
             ))}
