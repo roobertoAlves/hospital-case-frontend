@@ -269,3 +269,15 @@ export function Tabs<T extends string>({ tabs, current, onChange }: { tabs: { id
     </div>
   )
 }
+
+/* ------------------------------------------------------------------ avatar */
+
+/** Round avatar: the person's photo when there is one, otherwise their initials. */
+export function Avatar({ name, photo, size = 'size-8', className }: { name?: string; photo?: string | null; size?: string; className?: string }) {
+  const parts = String(name ?? '').trim().split(/\s+/).filter(Boolean)
+  const initials = parts.length ? (parts[0][0] + (parts.length > 1 ? parts[parts.length - 1][0] : '')).toUpperCase() : '?'
+  return photo
+    ? <img src={photo} alt="" className={cx('shrink-0 rounded-full object-cover ring-1 ring-line', size, className)} />
+    : <span className={cx('flex shrink-0 items-center justify-center rounded-full bg-brand-100 font-semibold text-brand-900', size, className)} aria-hidden="true">{initials}</span>
+}
+
