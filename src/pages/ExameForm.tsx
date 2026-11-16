@@ -4,7 +4,7 @@ import { useAviso } from '../components/avisos'
 import { BuscaPaciente, GradeHorarios, type Horario, type PacienteEscolhido } from '../components/agendamento'
 import { Alerta, Botao, BotaoLink, Cabecalho, Campo, Carregando, Entrada, SecaoForm, Seletor, Vazio } from '../components/ui'
 import { ApiError, get, post } from '../lib/api'
-import { cpfMascarado, data } from '../lib/formato'
+import { agrupar, cpfMascarado, data, rotuloCategoria } from '../lib/formato'
 import { useApi } from '../lib/useApi'
 
 type Linha = Record<string, unknown>
@@ -64,7 +64,11 @@ export default function ExameForm() {
           <Campo rotulo="Exame" nome="tipo" obrigatorio className="sm:col-span-4">
             <Seletor name="tipo" value={tipo} onChange={(e) => setTipo(e.target.value)}>
               <option value="">Escolha…</option>
-              {dados.tipos.map((x) => <option key={String(x.id_tipo_exame)} value={String(x.id_tipo_exame)}>{String(x.nome)} · {String(x.local)}</option>)}
+              {agrupar(dados.tipos, 'categoria').map(([g, lista]) => (
+                <optgroup key={g} label={rotuloCategoria(g)}>
+                  {lista.map((x) => <option key={String(x.id_tipo_exame)} value={String(x.id_tipo_exame)}>{String(x.nome)} · {String(x.local)}</option>)}
+                </optgroup>
+              ))}
             </Seletor>
           </Campo>
           {t && <div className="sm:col-span-6"><Alerta><strong>Preparo:</strong> {String(t.preparo ?? 'Sem preparo especial.')} · duração {String(t.duracao_min)} min</Alerta></div>}

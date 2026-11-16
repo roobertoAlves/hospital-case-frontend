@@ -96,9 +96,9 @@ export default function Inicio() {
           </div>
           <div className="rounded-[var(--radius-sheet)] bg-frame p-7">
             <h2 className="text-[22px] font-semibold">Exames de rotina sem pedido</h2>
-            <p className="mt-1 text-muted">Agende direto pelo portal. Os demais pedem o pedido médico anexado.</p>
+            <p className="mt-1 text-muted">Agende direto pelo portal. Os demais pedem o pedido médico anexado. <Link to="/servicos/exames" className="font-medium text-brand-700 hover:underline">Ver os {dados.exames.length} exames</Link></p>
             <ul className="mt-5 divide-y divide-line">
-              {dados.exames.filter((x) => String(x.exige_pedido) === '0').map((x) => (
+              {dados.exames.filter((x) => String(x.exige_pedido) === '0' && x.categoria === 'Analises clinicas').slice(0, 8).map((x) => (
                 <li key={String(x.id_tipo_exame)} className="flex items-center justify-between py-3">
                   <span><span className="block font-medium">{String(x.nome)}</span><span className="block text-[13px] text-muted">{String(x.preparo ?? '')}</span></span>
                   <span className="text-[13px] text-faint">{String(x.duracao_min)} min</span>

@@ -93,4 +93,22 @@ export function iniciais(nome: string | undefined): string {
   return ((p[0]?.[0] ?? '?') + (p.length > 1 ? p[p.length - 1][0] : '')).toUpperCase()
 }
 
-export const DIAS_SEMANA = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo']
+/** Categorias de exame vem sem acento do banco; aqui o rotulo de exibicao. */
+const CATEGORIAS: Record<string, string> = {
+  'Analises clinicas': 'Análises clínicas', Genetica: 'Genética', Respiratorio: 'Respiratório',
+}
+export const rotuloCategoria = (c: unknown) => CATEGORIAS[String(c)] ?? String(c ?? 'Outros')
+
+/** Agrupa linhas por um campo, mantendo a ordem em que os grupos aparecem. */
+export function agrupar<T extends Record<string, unknown>>(linhas: T[], campo: string): [string, T[]][] {
+  const grupos: [string, T[]][] = []
+  for (const l of linhas) {
+    const k = String(l[campo] ?? 'Outros')
+    const g = grupos.find(([n]) => n === k)
+    if (g) g[1].push(l)
+    else grupos.push([k, [l]])
+  }
+  return grupos
+}
+
+export const DIAS_SEMANA =['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo']

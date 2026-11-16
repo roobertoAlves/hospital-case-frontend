@@ -4,7 +4,7 @@ import { DialogoMotivo, useAviso } from '../../components/avisos'
 import { GradeHorarios, type Horario } from '../../components/agendamento'
 import { Alerta, Botao, Cabecalho, Campo, Carregando, Entrada, Painel, Pilula, Seletor, Vazio, cx } from '../../components/ui'
 import { abrirArquivo, ApiError, get, lerArquivo, post } from '../../lib/api'
-import { data, dataHora, hora, situacaoExame } from '../../lib/formato'
+import { agrupar, data, dataHora, hora, rotuloCategoria, situacaoExame } from '../../lib/formato'
 import { useApi } from '../../lib/useApi'
 
 type Linha = Record<string, unknown>
@@ -74,7 +74,11 @@ export default function MeusExames() {
             <Campo rotulo="Exame" nome="tipoExame">
               <Seletor name="tipoExame" value={tipo} onChange={(e) => { setTipo(e.target.value); setOrigem('') }}>
                 <option value="">Escolha…</option>
-                {dados.tipos.map((x) => <option key={String(x.id_tipo_exame)} value={String(x.id_tipo_exame)}>{String(x.nome)}{String(x.exige_pedido) === '1' ? ' (exige pedido)' : ''}</option>)}
+                {agrupar(dados.tipos, 'categoria').map(([g, lista]) => (
+                  <optgroup key={g} label={rotuloCategoria(g)}>
+                    {lista.map((x) => <option key={String(x.id_tipo_exame)} value={String(x.id_tipo_exame)}>{String(x.nome)}{String(x.exige_pedido) === '1' ? ' (exige pedido)' : ''}</option>)}
+                  </optgroup>
+                ))}
               </Seletor>
             </Campo>
             {t && <Alerta><strong>Preparo:</strong> {String(t.preparo ?? 'Sem preparo especial.')} · {String(t.local)} · {String(t.duracao_min)} min</Alerta>}

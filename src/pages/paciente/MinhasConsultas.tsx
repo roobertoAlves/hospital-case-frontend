@@ -119,12 +119,16 @@ export default function MinhasConsultas() {
         {anteriores.length === 0 ? <p className="text-muted">Nada por aqui ainda.</p> : (
           <ul className="divide-y divide-rule">
             {anteriores.map((c) => {
-              const [rot, tom] = situacaoConsulta(c.status)
+              // Remarcada: a consulta original fica cancelada no banco, mas para o paciente ela "mudou de horario".
+              const remarcada = !!c.remarcada_para
+              const [rot, tom] = remarcada ? ['Remarcada', 'accent' as const] : situacaoConsulta(c.status)
+              const motivo = String(c.motivo_cancelamento ?? '').replace(/^Remarcada para [^·]*·?\s*/, '')
               return (
                 <li key={String(c.id_consulta)} className="flex items-center gap-3 py-3 first:pt-0">
                   <span className="grow"><span className="block font-medium">{String(c.especialidade)}</span>
                     <span className="block text-[13px] text-muted">{data(c.data_hora)} às {hora(c.data_hora)} · {String(c.medico)}</span>
-                    {c.motivo_cancelamento ? <span className="block text-[12px] text-faint">{String(c.motivo_cancelamento)}</span> : null}</span>
+                    {remarcada && <span className="block text-[12px] text-brand-700">Novo horário: {data(c.remarcada_para)} às {hora(c.remarcada_para)}{motivo ? ` · ${motivo}` : ''}</span>}
+                    {!remarcada && c.motivo_cancelamento ? <span className="block text-[12px] text-faint">{String(c.motivo_cancelamento)}</span> : null}</span>
                   <Pilula tom={tom}>{rot}</Pilula>
                 </li>
               )
