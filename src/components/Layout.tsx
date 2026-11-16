@@ -1,12 +1,11 @@
 import { AnimatePresence, motion } from 'motion/react'
-import { ChevronDown, KeyRound, LogOut, Menu as MenuIcon, Search, X } from 'lucide-react'
+import { ChevronDown, LogOut, Menu as MenuIcon, Search, UserCircle, X } from 'lucide-react'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router'
-import { initials } from '../lib/format'
 import { MENU, visibleItems } from '../lib/menu'
 import { useSession } from '../lib/session'
 import { Logo } from './Logo'
-import { cx } from './ui'
+import { Avatar, cx } from './ui'
 
 function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const { user, logout } = useSession()
@@ -39,7 +38,6 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
         ))}
       </nav>
       <div className="mt-2 flex flex-col gap-0.5 border-t border-line pt-3">
-        <NavLink to="/trocar-senha" className={wrapperClass} onClick={onNavigate}><KeyRound className="size-[18px]" /> Trocar senha</NavLink>
         <button className="flex items-center gap-3 rounded-[10px] px-3 py-2 text-left text-muted hover:bg-white/60 hover:text-ink"
           onClick={async () => { await logout(); navigate('/login') }}>
           <LogOut className="size-[18px]" /> Sair
@@ -62,7 +60,7 @@ function UserMenu() {
   return (
     <div className="relative" ref={ref}>
       <button className="flex items-center gap-2.5 rounded-full py-1 pr-2 pl-1 hover:bg-white/70" onClick={() => setOpen((a) => !a)} aria-expanded={open} aria-label="Menu do usuário">
-        <span className="flex size-8 items-center justify-center rounded-full bg-brand-100 text-[12px] font-semibold text-brand-900">{initials(user?.nome)}</span>
+        <Avatar name={user?.nome} photo={user?.foto} className="text-[12px]" />
         <span className="hidden text-left leading-tight sm:block">
           <span className="block max-w-[180px] truncate text-[13px] font-medium">{user?.nome}</span>
           <span className="block text-[11px] text-muted">{user?.role_label}</span>
@@ -73,8 +71,8 @@ function UserMenu() {
         {open && (
           <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.15 }}
             className="absolute right-0 z-30 mt-2 w-52 rounded-[var(--radius-card)] border border-line bg-surface p-1.5 shadow-xl">
-            <button className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left hover:bg-raised" onClick={() => { setOpen(false); navigate('/trocar-senha') }}>
-              <KeyRound className="size-4" /> Trocar senha
+            <button className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left hover:bg-raised" onClick={() => { setOpen(false); navigate('/perfil') }}>
+              <UserCircle className="size-4" /> Meu perfil
             </button>
             <button className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-negative hover:bg-red-50" onClick={async () => { await logout(); navigate('/login') }}>
               <LogOut className="size-4" /> Sair
