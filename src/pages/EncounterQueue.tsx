@@ -8,7 +8,7 @@ type Row = Record<string, unknown>
 
 export default function EncounterQueue() {
   const navigate = useNavigate()
-  const { data, loading, error, reload } = useApi<{ queue: Row[]; no_professional_record?: boolean }>('api/atendimento')
+  const { data, loading, error, reload } = useApi<{ queue: Row[]; no_professional_record?: boolean }>('api/encounters')
   if (loading && !data) return <Loading />
   if (error || !data) return <Empty>{error?.message}</Empty>
   const waiting = data.queue.filter((c) => c.status === 'aguardando_atendimento').length

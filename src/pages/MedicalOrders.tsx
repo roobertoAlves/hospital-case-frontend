@@ -14,11 +14,11 @@ type Status = 'pendente' | 'aprovado' | 'recusado'
 export default function MedicalOrders() {
   const notify = useNotice()
   const [status, setStatus] = useState<Status>('pendente')
-  const { data, loading, error, reload } = useApi<{ orders: Row[] }>('api/pedidos', { status })
+  const { data, loading, error, reload } = useApi<{ orders: Row[] }>('api/medical-orders', { status })
   const [reject, setRejecting] = useState<Row | null>(null)
 
-  const conferir = async (p: Row, decision: 'aprovar' | 'recusar', reason = '') => {
-    try { const r = await post(`api/pedidos/${p.id_pedido}/conferir`, { decision, reason }); notify(r.message ?? 'Feito.'); reload() }
+  const review = async (p: Row, decision: 'approve' | 'reject', reason = '') => {
+    try { const r = await post(`api/medical-orders/${p.id_pedido}/review`, { decision, reason }); notify(r.message ?? 'Feito.'); reload() }
     catch (e) { notify(e instanceof ApiError ? e.message : 'Não foi possível conferir.', false) }
   }
 
@@ -38,19 +38,19 @@ export default function MedicalOrders() {
                     <span className="font-normal text-muted"> · {age(p.data_nascimento)} anos</span></p>
                   <p className="text-[13px] text-muted">Enviado em {formatDateTime(p.enviado_em)}{p.exame ? ` · para ${p.exame}` : ''}</p>
                   {p.observacao ? <p className="mt-1 text-[13px]">“{String(p.observacao)}”</p> : null}
-                  {(p.agendamentos as Row[]).length > 0 && (
+                  {(p.bookings as Row[]).length > 0 && (
                     <p className="mt-2 text-[13px]"><strong>Exames marcados com este pedido:</strong>{' '}
-                      {(p.agendamentos as Row[]).map((a) => `${a.exame} em ${formatDateTime(a.data_hora)} (${a.status})`).join(' · ')}</p>
+                      {(p.bookings as Row[]).map((a) => `${a.exame} em ${formatDateTime(a.data_hora)} (${a.status})`).join(' · ')}</p>
                   )}
                   {p.motivo_recusa ? <p className="mt-1 text-[13px] text-negative">Recusado: {String(p.motivo_recusa)}</p> : null}
                   {p.conferido_por ? <p className="mt-1 text-[12px] text-faint">Conferido por {String(p.conferido_por)} em {formatDateTime(p.conferido_em)}</p> : null}
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
-                  <Button small icon={FileSearch} onClick={() => openFile(`api/pedidos/${p.id_pedido}/arquivo`).catch((e) => notify(e.message, false))}>
+                  <Button small icon={FileSearch} onClick={() => openFile(`api/medical-orders/${p.id_pedido}/file`).catch((e) => notify(e.message, false))}>
                     {String(p.mime).includes('pdf') ? 'Abrir PDF' : 'Abrir imagem'}
                   </Button>
                   {p.status === 'pendente' ? <>
-                    <Button small variant="primario" icon={Check} onClick={() => conferir(p, 'aprovar')}>Aprovar</Button>
+                    <Button small variant="primario" icon={Check} onClick={() => review(p, 'approve')}>Aprovar</Button>
                     <Button small variant="perigo" icon={X} onClick={() => setRejecting(p)}>Recusar</Button>
                   </> : <Badge tone={p.status === 'aprovado' ? 'positive' : 'negative'}>{p.status === 'aprovado' ? 'Aprovado' : 'Recusado'}</Badge>}
                 </div>
@@ -61,7 +61,7 @@ export default function MedicalOrders() {
       )}
       <ReasonDialog open={!!reject} title={`Recusar pedido de ${reject?.paciente ?? ''}`} buttonLabel="Recusar pedido"
         help="O paciente recebe o motivo por e-mail e os exames marcados com este pedido são cancelados. Ex.: ilegível, sem assinatura, vencido."
-        onClose={() => setRejecting(null)} onConfirm={async (reason) => { await conferir(reject!, 'recusar', reason); setRejecting(null) }} />
+        onClose={() => setRejecting(null)} onConfirm={async (reason) => { await review(reject!, 'reject', reason); setRejecting(null) }} />
     </>
   )
 }

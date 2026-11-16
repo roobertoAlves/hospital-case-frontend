@@ -13,7 +13,7 @@ import { useForm } from '../lib/useForm'
 type Row = Record<string, unknown>
 interface Data { professional: Row; specialties: Row[]; users: Row[] }
 const UFS = 'AC AL AP AM BA CE DF ES GO MA MT MS MG PA PB PR PE PI RJ RN RS RO RR SC SP SE TO'.split(' ')
-const FIELDS = ['tipo', 'nome', 'email', 'telefone', 'crm', 'crm_uf', 'duracao_consulta_min', 'coren', 'coren_uf', 'cargo', 'id_usuario', 'criar_acesso'] as const
+const FIELDS = ['tipo', 'nome', 'email', 'telefone', 'crm', 'crm_uf', 'duracao_consulta_min', 'coren', 'coren_uf', 'cargo', 'id_usuario', 'create_access'] as const
 type Values = Record<(typeof FIELDS)[number], string>
 interface Range { dia_semana: string; hora_inicio: string; hora_fim: string }
 
@@ -23,9 +23,9 @@ export default function ProfessionalForm() {
   const [params] = useSearchParams()
   const { can } = useSession()
   const notify = useNotice()
-  const { data, loading, error, reload } = useApi<Data>(editing ? `api/profissionais/${id}` : 'api/profissionais/opcoes', editing ? undefined : { tipo: params.get('tipo') })
+  const { data, loading, error, reload } = useApi<Data>(editing ? `api/professionals/${id}` : 'api/professionals/options', editing ? undefined : { type: params.get('tipo') })
   const f = useForm<Values>(Object.fromEntries(FIELDS.map((c) => [c, ''])) as Values)
-  const [specialty, setSpecialty] = useState<string[]>([])
+  const [specialtyIds, setSpecialtyIds] = useState<string[]>([])
   const [ranges, setRanges] = useState<Range[]>([])
   const [rangeErrors, setRangeErrors] = useState<Record<string, string>>({})
   const [savingRanges, setSavingRanges] = useState(false)
@@ -35,28 +35,28 @@ export default function ProfessionalForm() {
     const p = data.professional
     const v = Object.fromEntries(FIELDS.map((c) => [c, p[c] == null ? '' : String(p[c])])) as Values
     v.duracao_consulta_min = v.duracao_consulta_min || '30'
-    v.criar_acesso = ''
+    v.create_access = ''
     f.setValues(v)
-    setSpecialty(((p.ids_especialidades as unknown[]) ?? []).map(String))
-    setRanges(((p.disponibilidades as Row[]) ?? []).map((x) => ({ dia_semana: String(x.dia_semana), hora_inicio: String(x.hora_inicio), hora_fim: String(x.hora_fim) })))
+    setSpecialtyIds(((p.specialty_ids as unknown[]) ?? []).map(String))
+    setRanges(((p.availability as Row[]) ?? []).map((x) => ({ dia_semana: String(x.dia_semana), hora_inicio: String(x.hora_inicio), hora_fim: String(x.hora_fim) })))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data])
 
   if (loading && !data) return <Loading />
   if (error || !data) return <Empty>{error?.message ?? 'Profissional não encontrado.'}</Empty>
   const p = data.professional
-  const tipo = f.values.tipo || 'medico'
-  const doctor = tipo === 'medico', nurse = tipo === 'enfermeiro'
+  const type = f.values.tipo || 'medico'
+  const doctor = type === 'medico', nurse = type === 'enfermeiro'
   const active = !editing || String(p.ativo) === '1'
   const upcoming = Number(p.consultas_futuras ?? 0)
 
   const status = async () => {
-    try { const r = await post(`api/profissionais/${id}/situacao`, { ativo: active ? '0' : '1' }); notify(r.message ?? 'Feito.'); reload() }
+    try { const r = await post(`api/professionals/${id}/status`, { active: active ? '0' : '1' }); notify(r.message ?? 'Feito.'); reload() }
     catch (e) { notify(e instanceof ApiError ? e.message : 'Não foi possível alterar.', false) }
   }
   const saveRanges = async () => {
     setSavingRanges(true); setRangeErrors({})
-    try { const r = await post(`api/profissionais/${id}/disponibilidade`, { ranges }); notify(r.message ?? 'Disponibilidade salva.') }
+    try { const r = await post(`api/professionals/${id}/availability`, { ranges }); notify(r.message ?? 'Disponibilidade salva.') }
     catch (e) { if (e instanceof ApiError) { setRangeErrors(e.details ?? {}); notify(e.message, false) } }
     finally { setSavingRanges(false) }
   }
@@ -85,13 +85,13 @@ export default function ProfessionalForm() {
         actions={editing && <Button variant={active ? 'perigo' : 'secundario'} onClick={status}>{active ? 'Inativar' : 'Reativar'}</Button>}
       />
       {editing && !active && <div className="mb-4"><Alert>Profissional inativo: não aparece no agendamento nem nas filas, e o acesso dele não abre telas clínicas.</Alert></div>}
-      <form noValidate className="max-w-[1100px]" onSubmit={f.submit(editing ? `api/profissionais/${id}` : 'api/profissionais', { body: () => ({ ...f.values, tipo, especialidades: specialty.join(',') }) })}>
+      <form noValidate className="max-w-[1100px]" onSubmit={f.submit(editing ? `api/professionals/${id}` : 'api/professionals', { body: () => ({ ...f.values, tipo: type, specialty_ids: specialtyIds.join(',') }), redirectTo: (d) => `/profissionais/${editing ? id : d?.id_profissional}` })}>
         <FormSection title="Tipo" description={editing ? 'O tipo não muda depois do cadastro.' : 'Define o registro profissional e o perfil de acesso.'}>
           {editing ? <p className="font-medium sm:col-span-6">{doctor ? 'Médico' : nurse ? 'Enfermeiro' : 'Funcionário'}</p> : (
             <div className="grid gap-2 sm:col-span-6 sm:grid-cols-3" role="radiogroup" aria-label="Tipo de profissional">
               {TYPES.map((t) => (
-                <button key={t.id} type="button" role="radio" aria-checked={tipo === t.id} onClick={() => f.change('tipo', t.id)}
-                  className={cx('flex items-center gap-3 rounded-[var(--radius-card)] border p-3.5 text-left transition-all', tipo === t.id ? 'border-ink shadow-[inset_0_0_0_1px_var(--color-ink)]' : 'border-line hover:border-control')}>
+                <button key={t.id} type="button" role="radio" aria-checked={type === t.id} onClick={() => f.change('tipo', t.id)}
+                  className={cx('flex items-center gap-3 rounded-[var(--radius-card)] border p-3.5 text-left transition-all', type === t.id ? 'border-ink shadow-[inset_0_0_0_1px_var(--color-ink)]' : 'border-line hover:border-control')}>
                   <t.icone className="size-5 text-brand-700" /> <span className="font-medium">{t.rotulo}</span>
                 </button>
               ))}
@@ -116,16 +116,16 @@ export default function ProfessionalForm() {
               <legend className="mb-2 text-[13px] font-medium">Especialidades <span className="text-negative">*</span></legend>
               <div className="flex flex-wrap gap-2">
                 {data.specialties.map((e) => {
-                  const v = String(e.id_especialidade), on = specialty.includes(v)
+                  const v = String(e.id_especialidade), on = specialtyIds.includes(v)
                   return (
-                    <button key={v} type="button" role="checkbox" aria-checked={on} onClick={() => setSpecialty(on ? specialty.filter((x) => x !== v) : [...specialty, v])}
+                    <button key={v} type="button" role="checkbox" aria-checked={on} onClick={() => setSpecialtyIds(on ? specialtyIds.filter((x) => x !== v) : [...specialtyIds, v])}
                       className={cx('rounded-full border px-3.5 py-1.5 text-[13px] font-medium transition-colors', on ? 'border-brand-600 bg-brand-50 text-brand-900' : 'border-line hover:border-control')}>
                       {String(e.nome)}
                     </button>
                   )
                 })}
               </div>
-              {f.errors.especialidades && <p className="mt-1.5 text-[12px] text-negative">{f.errors.especialidades}</p>}
+              {f.errors.specialty_ids && <p className="mt-1.5 text-[12px] text-negative">{f.errors.specialty_ids}</p>}
               <Link to="/especialidades" className="mt-2 inline-block text-[12px] text-brand-700 hover:underline">Gerenciar especialidades</Link>
             </fieldset>
           </>}
@@ -141,7 +141,7 @@ export default function ProfessionalForm() {
           </Field>
           {!editing && (
             <label className="flex items-start gap-2.5 sm:col-span-6">
-              <input type="checkbox" className="mt-0.5 size-4 accent-ink" checked={f.values.criar_acesso === '1'} onChange={(e) => f.change('criar_acesso', e.target.checked ? '1' : '')} />
+              <input type="checkbox" className="mt-0.5 size-4 accent-ink" checked={f.values.create_access === '1'} onChange={(e) => f.change('create_access', e.target.checked ? '1' : '')} />
               <span>Criar um acesso novo com o e-mail acima
                 <span className="block text-[12px] text-faint">O usuário recebe uma senha temporária por e-mail e troca no primeiro login. A senha não aparece nesta tela.</span></span>
             </label>
@@ -168,7 +168,7 @@ export default function ProfessionalForm() {
                   <Input aria-label="Fim" type="time" step={300} value={fx.hora_fim} onChange={(e) => setRanges(ranges.map((x, j) => (j === i ? { ...x, hora_fim: e.target.value } : x)))} />
                   <Button variant="perigoTexto" onClick={() => setRanges(ranges.filter((_, j) => j !== i))}>Remover</Button>
                 </div>
-                {rangeErrors[`faixa_${i}`] && <p className="mt-1 text-[12px] text-negative">{rangeErrors[`faixa_${i}`]}</p>}
+                {rangeErrors[`range_${i}`] && <p className="mt-1 text-[12px] text-negative">{rangeErrors[`range_${i}`]}</p>}
               </div>
             ))}
           </div>

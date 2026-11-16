@@ -21,7 +21,7 @@ export default function TriageForm() {
   const { id } = useParams()
   const navigate = useNavigate()
   const notify = useNotice()
-  const { data, loading, error } = useApi<Data>(`api/triagem/${id}`)
+  const { data, loading, error } = useApi<Data>(`api/triage/${id}`)
   const f = useForm<Values>(empty)
 
   useEffect(() => {
@@ -52,11 +52,11 @@ export default function TriageForm() {
   )
 
   const sendBack = async () => {
-    try { await post(`api/triagem/${id}/devolver`); notify('Paciente devolvido à fila.'); navigate('/triagem') }
+    try { await post(`api/triage/${id}/send-back`); notify('Paciente devolvido à fila.'); navigate('/triagem') }
     catch (e) { notify(e instanceof ApiError ? e.message : 'Não foi possível devolver.', false) }
   }
 
-  const action = t ? `api/triagens/${t.id_triagem}/retificar` : `api/triagem/${id}`
+  const action = t ? `api/triages/${t.id_triagem}/amend` : `api/triage/${id}`
   const submit = f.submit(action, { after: () => navigate('/triagem') })
 
   const list: ReactNode = data.allergies.map((a, i) => <span key={i}>{i > 0 && ' · '}{String(a.substancia)}{a.gravidade ? ` (${a.gravidade})` : ''}</span>)
@@ -119,7 +119,7 @@ export default function TriageForm() {
             </Field>
           </FormSection>
         )}
-        {f.errors.geral && <div className="mb-3"><Alert tone="erro">{f.errors.geral}</Alert></div>}
+        {f.errors.general && <div className="mb-3"><Alert tone="erro">{f.errors.general}</Alert></div>}
         <div className="flex justify-end gap-2 border-t border-line pt-5">
           <ButtonLink to="/triagem">Voltar à fila</ButtonLink>
           {data.can_record && <Button type="submit" variant="primario" loading={f.sending}>Registrar e enviar ao médico</Button>}

@@ -6,7 +6,7 @@ import { TextArea, Button, Field } from './ui'
 /* ------------------------------------------------------------------ avisos (toast) */
 
 interface Notice { id: number; text: string; ok: boolean }
-const NoticeContext = createContext<(texto: string, ok?: boolean) => void>(() => undefined)
+const NoticeContext = createContext<(text: string, ok?: boolean) => void>(() => undefined)
 
 export function NoticesProvider({ children }: { children: ReactNode }) {
   const [list, setList] = useState<Notice[]>([])

@@ -2,7 +2,7 @@ import { motion } from 'motion/react'
 import { ArrowRight } from 'lucide-react'
 import { Link } from 'react-router'
 import { DayTimeline } from '../components/DayTimeline'
-import { Loading, PageHeader, Kpi, Panel as Bloco, Badge, Priority, FadeIn, Empty } from '../components/ui'
+import { Loading, PageHeader, Kpi, Panel, Badge, Priority, FadeIn, Empty } from '../components/ui'
 import { longDate, formatTime, appointmentStatus } from '../lib/format'
 import { SHORTCUTS, visibleItems } from '../lib/menu'
 import { useSession } from '../lib/session'
@@ -10,14 +10,12 @@ import { useApi } from '../lib/useApi'
 
 type Row = Record<string, unknown>
 interface DashboardData {
-  painel: {
     today: string
     reception?: boolean; day_appointments?: number; arrived?: number; awaiting_triage?: number; day_exams?: number; cancelled?: number; next_arrivals?: Row[]
     timeline_doctors?: Row[]; timeline_appointments?: Row[]
     nursing?: boolean; triage_queue?: Row[]; by_priority?: Row[]
     doctor?: boolean; professional?: Row; my_schedule?: Row[]; doctor_queue?: Row[]; completed?: number
     admin?: boolean; active_patients?: number; active_professionals?: number; completed_this_month?: number; scheduled_ahead?: number; active_users?: number; blocked_users?: number
-  }
 }
 
 function greeting() {
@@ -33,7 +31,7 @@ function AppointmentList({ items, empty, link }: { items: Row[]; empty: string; 
         const [label, tone] = appointmentStatus(c.status)
         const body = (
           <>
-            <span className="num w-12 shrink-0 font-medium">{formatTime(c.hora ?? c.data_hora)}</span>
+            <span className="num w-12 shrink-0 font-medium">{formatTime(c.time ?? c.data_hora)}</span>
             <span className="min-w-0 grow">
               <span className="block truncate font-medium">{String(c.paciente)}</span>
               <span className="block truncate text-[12px] text-muted">{String(c.medico ?? c.especialidade ?? '')}</span>
@@ -54,10 +52,10 @@ function AppointmentList({ items, empty, link }: { items: Row[]; empty: string; 
 
 export default function Dashboard() {
   const { user } = useSession()
-  const { data, loading, error } = useApi<DashboardData>('api/painel')
+  const { data, loading, error } = useApi<DashboardData>('api/dashboard')
   if (loading && !data) return <Loading />
   if (error) return <Empty>{error.message}</Empty>
-  const p = data!.painel
+  const p = data!
   const shortcuts = visibleItems(SHORTCUTS, user?.permissions ?? [])
 
   return (
@@ -81,7 +79,7 @@ export default function Dashboard() {
       )}
       {p.doctor && (
         <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4">
-          <Kpi label="Consultas hoje" value={p.my_schedule?.filter((c) => c.status !== 'cancelada').length} highlight note={String(p.professional?.registro ?? '')} />
+          <Kpi label="Consultas hoje" value={p.my_schedule?.filter((c) => c.status !== 'cancelada').length} highlight note={String(p.professional?.license ?? '')} />
           <Kpi label="Aguardando você" value={p.doctor_queue?.length} delay={0.05} />
           <Kpi label="Atendidos hoje" value={p.completed} delay={0.1} />
         </div>
@@ -99,17 +97,17 @@ export default function Dashboard() {
 
       <div className="grid gap-5 xl:grid-cols-3">
         {p.reception && (
-          <Bloco title="Próximas chegadas" meta="ainda não chegaram" className="xl:col-span-1">
+          <Panel title="Próximas chegadas" meta="ainda não chegaram" className="xl:col-span-1">
             <AppointmentList items={p.next_arrivals ?? []} empty="Ninguém mais previsto para hoje." />
-          </Bloco>
+          </Panel>
         )}
         {p.nursing && (
-          <Bloco title="Fila de triagem" meta={<Link to="/triagem" className="text-brand-700 hover:underline">abrir fila</Link>}>
+          <Panel title="Fila de triagem" meta={<Link to="/triagem" className="text-brand-700 hover:underline">abrir fila</Link>}>
             <AppointmentList items={p.triage_queue ?? []} empty="Ninguém aguardando triagem." link={() => '/triagem'} />
-          </Bloco>
+          </Panel>
         )}
         {p.nursing && (
-          <Bloco title="Triados hoje por prioridade">
+          <Panel title="Triados hoje por prioridade">
             <ul className="space-y-2.5">
               {(p.by_priority ?? []).map((c) => {
                 const max = Math.max(1, ...(p.by_priority ?? []).map((x) => Number(x.total)))
@@ -124,19 +122,19 @@ export default function Dashboard() {
                 )
               })}
             </ul>
-          </Bloco>
+          </Panel>
         )}
         {p.doctor && (
-          <Bloco title="Aguardando atendimento" meta="pela prioridade da triagem">
+          <Panel title="Aguardando atendimento" meta="pela prioridade da triagem">
             <AppointmentList items={p.doctor_queue ?? []} empty="Ninguém aguardando você agora." link={(c) => `/atendimento/${c.id_consulta}`} />
-          </Bloco>
+          </Panel>
         )}
         {p.doctor && (
-          <Bloco title="Minha agenda de hoje" className="xl:col-span-2">
+          <Panel title="Minha agenda de hoje" className="xl:col-span-2">
             <AppointmentList items={p.my_schedule ?? []} empty="Sem consultas hoje." />
-          </Bloco>
+          </Panel>
         )}
-        <Bloco title="Seus atalhos" className={p.doctor ? '' : 'xl:col-span-2'}>
+        <Panel title="Seus atalhos" className={p.doctor ? '' : 'xl:col-span-2'}>
           <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
             {shortcuts.map((a, i) => (
               <FadeIn key={a.label} delay={0.04 * i}>
@@ -148,13 +146,13 @@ export default function Dashboard() {
               </FadeIn>
             ))}
           </div>
-        </Bloco>
+        </Panel>
       </div>
 
       {p.timeline_doctors && p.timeline_doctors.length > 0 && (
-        <Bloco title="Linha do dia" meta={`${p.timeline_doctors.length} médicos atendendo hoje`} className="mt-5">
+        <Panel title="Linha do dia" meta={`${p.timeline_doctors.length} médicos atendendo hoje`} className="mt-5">
           <DayTimeline doctors={p.timeline_doctors} appointments={p.timeline_appointments ?? []} />
-        </Bloco>
+        </Panel>
       )}
     </>
   )

@@ -14,7 +14,7 @@ const empty = Object.fromEntries(FIELDS.map((c) => [c, ''])) as Values
 export default function PatientForm() {
   const { id } = useParams()
   const editing = !!id
-  const { data, loading, error } = useApi<{ patient: Record<string, unknown> }>(editing ? `api/pacientes/${id}` : null)
+  const { data, loading, error } = useApi<{ patient: Record<string, unknown> }>(editing ? `api/patients/${id}` : null)
   const f = useForm<Values>(empty)
 
   useEffect(() => {
@@ -45,7 +45,7 @@ export default function PatientForm() {
         title={editing ? 'Editar cadastro' : 'Cadastrar paciente'}
         subtitle="Campos com * são obrigatórios. O CPF não pode se repetir."
       />
-      <form onSubmit={f.submit(editing ? `api/pacientes/${id}` : 'api/pacientes')} noValidate className="max-w-[1100px]">
+      <form onSubmit={f.submit(editing ? `api/patients/${id}` : 'api/patients', { redirectTo: (d) => `/pacientes/${editing ? id : d?.id_paciente}` })} noValidate className="max-w-[1100px]">
         <FormSection title="Identificação" description="Como o paciente aparece na agenda, nas filas e nos documentos.">
           {input('nome', 'Nome completo', { required: true, width: 'sm:col-span-4', max: 150 })}
           {input('cpf', 'CPF', { required: true, width: 'sm:col-span-2', mask: maskCpf })}

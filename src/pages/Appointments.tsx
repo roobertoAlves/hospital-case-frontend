@@ -18,7 +18,7 @@ export default function Appointments() {
   const notify = useNotice()
   const [params, setParams] = useSearchParams()
   const day = params.get('data') ?? todayIso()
-  const { data, loading, error, reload } = useApi<Data>('api/agenda', { data: day })
+  const { data, loading, error, reload } = useApi<Data>('api/appointments', { date: day })
   const [cancel, setCancelling] = useState<Row | null>(null)
   const [busy, setBusy] = useState<number | null>(null)
 
@@ -68,7 +68,7 @@ export default function Appointments() {
                       <Td><Badge tone={tone}>{label}</Badge></Td>
                       <Td className="text-right whitespace-nowrap">
                         {can('consultas.chegada') && isToday && st === 'agendada' && (
-                          <Button small loading={busy === id} onClick={async () => { setBusy(id); await action(`api/consultas/${id}/chegada`); setBusy(null) }}>Registrar chegada</Button>
+                          <Button small loading={busy === id} onClick={async () => { setBusy(id); await action(`api/appointments/${id}/check-in`); setBusy(null) }}>Registrar chegada</Button>
                         )}
                         {can('consultas.remarcar') && st === 'agendada' && <ButtonLink to={`/agenda/${id}/remarcar`} variant="texto" small>Remarcar</ButtonLink>}
                         {can('consultas.cancelar') && (st === 'agendada' || st === 'aguardando_triagem') && (
@@ -89,7 +89,7 @@ export default function Appointments() {
         help="O motivo fica registrado no histórico. O paciente recebe um aviso por e-mail, sem detalhes clínicos."
         buttonLabel="Confirmar cancelamento"
         onClose={() => setCancelling(null)}
-        onConfirm={async (reason) => { await action(`api/consultas/${cancel!.id_consulta}/cancelar`, { reason }); setCancelling(null) }}
+        onConfirm={async (reason) => { await action(`api/appointments/${cancel!.id_consulta}/cancel`, { reason }); setCancelling(null) }}
       />
     </>
   )

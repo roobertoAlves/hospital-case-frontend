@@ -88,8 +88,8 @@ export function formattedCpf(cpf: unknown): string {
 
 export const or = (v: unknown) => (v === null || v === undefined || String(v).trim() === '' ? '—' : String(v))
 
-export function initials(nome: string | undefined): string {
-  const p = (nome ?? '?').replace(/\(.*?\)/g, '').trim().split(/\s+/)
+export function initials(name: string | undefined): string {
+  const p = (name ?? '?').replace(/\(.*?\)/g, '').trim().split(/\s+/)
   return ((p[0]?.[0] ?? '?') + (p.length > 1 ? p[p.length - 1][0] : '')).toUpperCase()
 }
 

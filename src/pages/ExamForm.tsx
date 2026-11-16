@@ -13,9 +13,9 @@ export default function ExamForm() {
   const [params] = useSearchParams()
   const navigate = useNavigate()
   const notify = useNotice()
-  const { data, loading, error } = useApi<{ types: Row[]; today: string; patient?: Row }>('api/exames/opcoes', { paciente: params.get('paciente') })
+  const { data, loading, error } = useApi<{ types: Row[]; today: string; patient?: Row }>('api/exams/options', { patient: params.get('paciente') })
   const [patient, setPatient] = useState<SelectedPatient | null>(null)
-  const [tipo, setTipo] = useState('')
+  const [type, setType] = useState('')
   const [day, setDay] = useState('')
   const [slots, setSlots] = useState<Slot[] | null>(null)
   const [loadingSlots, setLoadingSlots] = useState(false)
@@ -31,21 +31,21 @@ export default function ExamForm() {
 
   useEffect(() => {
     setTime('')
-    if (!tipo || !day) { setSlots(null); return }
+    if (!type || !day) { setSlots(null); return }
     setLoadingSlots(true)
-    get<Slot[]>('api/exames/horarios', { tipo, data: day }).then((r) => setSlots(r.data)).catch(() => setSlots([])).finally(() => setLoadingSlots(false))
-  }, [tipo, day])
+    get<Slot[]>('api/exams/slots', { type: type, date: day }).then((r) => setSlots(r.data)).catch(() => setSlots([])).finally(() => setLoadingSlots(false))
+  }, [type, day])
 
   if (loading && !data) return <Loading />
   if (error || !data) return <Empty>{error?.message ?? 'Não foi possível carregar.'}</Empty>
-  const t = data.types.find((x) => String(x.id_tipo_exame) === tipo)
-  const ready = !!patient && !!tipo && !!chosenTime
+  const t = data.types.find((x) => String(x.id_tipo_exame) === type)
+  const ready = !!patient && !!type && !!chosenTime
 
   const submit = async (e: FormEvent) => {
     e.preventDefault()
     setSending(true)
     try {
-      const r = await post('api/exames-agendados', { id_paciente: patient!.id_paciente, id_tipo_exame: tipo, data: day, hora: chosenTime })
+      const r = await post('api/exams', { id_paciente: patient!.id_paciente, id_tipo_exame: type, date: day, time: chosenTime })
       notify(r.message ?? 'Exame agendado.')
       navigate(`/exames?data=${day}`)
     } catch (err) {
@@ -62,7 +62,7 @@ export default function ExamForm() {
         </FormSection>
         <FormSection title="Exame" description="Cada exame acontece num local, com duração própria.">
           <Field label="Exame" name="tipo" required className="sm:col-span-4">
-            <Select name="tipo" value={tipo} onChange={(e) => setTipo(e.target.value)}>
+            <Select name="tipo" value={type} onChange={(e) => setType(e.target.value)}>
               <option value="">Escolha…</option>
               {groupBy(data.types, 'categoria').map(([g, list]) => (
                 <optgroup key={g} label={categoryLabel(g)}>

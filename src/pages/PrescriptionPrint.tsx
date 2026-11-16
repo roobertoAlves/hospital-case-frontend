@@ -11,7 +11,7 @@ type Row = Record<string, unknown>
 export default function PrescriptionPrint({ portal = false }: { portal?: boolean }) {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { data, loading, error } = useApi<{ prescription: Row }>(portal ? `api/portal/receitas/${id}` : `api/receitas/${id}`)
+  const { data, loading, error } = useApi<{ prescription: Row }>(portal ? `api/portal/prescriptions/${id}` : `api/prescriptions/${id}`)
   if (loading && !data) return <div className="p-8"><Loading /></div>
   if (error || !data) return <div className="p-8"><Empty>{error?.message ?? 'Receita não encontrada.'}</Empty></div>
   const r = data.prescription
@@ -45,7 +45,7 @@ export default function PrescriptionPrint({ portal = false }: { portal?: boolean
         </section>
         <h1 className="mt-8 mb-4 text-[20px] font-semibold">Prescrição</h1>
         <ol className="space-y-4">
-          {(r.itens as Row[]).map((i, k) => (
+          {(r.items as Row[]).map((i, k) => (
             <li key={k} className="grid grid-cols-[28px_1fr] gap-2">
               <span className="font-semibold">{k + 1}.</span>
               <span>

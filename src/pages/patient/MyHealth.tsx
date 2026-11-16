@@ -17,7 +17,7 @@ interface Summary {
 
 function LinkAccount({ email, onLink }: { email?: string | null; onLink: () => void }) {
   const notify = useNotice()
-  const [codigo, setCodigo] = useState('')
+  const [code, setCode] = useState('')
   const [error, setError] = useState('')
   const [sending, setSending] = useState(false)
   if (!email) {
@@ -25,7 +25,7 @@ function LinkAccount({ email, onLink }: { email?: string | null; onLink: () => v
   }
   const submit = async (e: FormEvent) => {
     e.preventDefault(); setError(''); setSending(true)
-    try { const r = await post('api/portal/vincular', { codigo }); notify(r.message ?? 'Conta ligada.'); onLink() }
+    try { const r = await post('api/portal/link', { code: code }); notify(r.message ?? 'Conta ligada.'); onLink() }
     catch (err) { setError(err instanceof ApiError ? err.message : 'Não foi possível confirmar.') }
     finally { setSending(false) }
   }
@@ -38,12 +38,12 @@ function LinkAccount({ email, onLink }: { email?: string | null; onLink: () => v
       </div>
       <form onSubmit={submit} className="mt-6 flex flex-col gap-3">
         <label htmlFor="codigo" className="sr-only">Código</label>
-        <Input id="codigo" inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={codigo} onChange={(e) => setCodigo(e.target.value.replace(/\D/g, ''))}
+        <Input id="codigo" inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
           className="num h-14 text-center text-[26px] tracking-[0.5em]" placeholder="000000" invalid={!!error} />
         {error && <p className="text-center text-[13px] text-negative">{error}</p>}
-        <Button type="submit" variant="primario" className="h-11" loading={sending} disabled={codigo.length !== 6}>Confirmar</Button>
+        <Button type="submit" variant="primario" className="h-11" loading={sending} disabled={code.length !== 6}>Confirmar</Button>
         <Button type="button" variant="texto" onClick={async () => {
-          try { const r = await post('api/portal/vincular/reenviar'); notify(r.message ?? 'Código reenviado.') }
+          try { const r = await post('api/portal/link/resend'); notify(r.message ?? 'Código reenviado.') }
           catch (err) { notify(err instanceof ApiError ? err.message : 'Não foi possível reenviar.', false) }
         }}>Enviar outro código</Button>
       </form>
@@ -53,7 +53,7 @@ function LinkAccount({ email, onLink }: { email?: string | null; onLink: () => v
 
 export default function MyHealth() {
   const { user } = useSession()
-  const { data, loading, error, reload } = useApi<Summary>('api/portal/resumo')
+  const { data, loading, error, reload } = useApi<Summary>('api/portal/summary')
   if (loading && !data) return <Loading />
   if (error || !data) return <Empty>{error?.message}</Empty>
   if (!data.linked) return <LinkAccount email={data.record_email} onLink={reload} />

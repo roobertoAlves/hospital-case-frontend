@@ -17,7 +17,7 @@ export default function AppointmentForm() {
   const [params] = useSearchParams()
   const navigate = useNavigate()
   const notify = useNotice()
-  const { data, loading, error } = useApi<Options>(reschedule ? `api/consultas/${id}/remarcar` : 'api/agenda/opcoes', reschedule ? undefined : { paciente: params.get('paciente') })
+  const { data, loading, error } = useApi<Options>(reschedule ? `api/appointments/${id}/reschedule` : 'api/appointments/options', reschedule ? undefined : { patient: params.get('paciente') })
 
   const [patient, setPatient] = useState<SelectedPatient | null>(null)
   const [specialty, setSpecialty] = useState('')
@@ -45,7 +45,7 @@ export default function AppointmentForm() {
 
   useEffect(() => {
     if (!specialty) { setDoctors(null); return }
-    get<Row[]>('api/agenda/medicos', { especialidade: specialty }).then((r) => {
+    get<Row[]>('api/appointments/doctors', { specialty: specialty }).then((r) => {
       setDoctors(r.data)
       setDoctor((m) => (r.data.some((x) => String(x.id_profissional) === m) ? m : ''))
     }).catch(() => setDoctors([]))
@@ -55,7 +55,7 @@ export default function AppointmentForm() {
     setTime('')
     if (!doctor || !day) { setSlots(null); return }
     setLoadingSlots(true)
-    get<Slot[]>('api/agenda/horarios', { doctor, data: day }).then((r) => setSlots(r.data)).catch(() => setSlots([])).finally(() => setLoadingSlots(false))
+    get<Slot[]>('api/appointments/slots', { doctor, date: day }).then((r) => setSlots(r.data)).catch(() => setSlots([])).finally(() => setLoadingSlots(false))
   }, [doctor, day])
 
   if (loading && !data) return <Loading />
@@ -69,13 +69,13 @@ export default function AppointmentForm() {
     setSending(true)
     try {
       const r = reschedule
-        ? await post<Row>(`api/consultas/${id}/remarcar`, { id_medico: doctor, data: day, hora: chosenTime, reason })
-        : await post<Row>('api/consultas', { id_paciente: patient!.id_paciente, id_especialidade: specialty, id_medico: doctor, data: day, hora: chosenTime })
+        ? await post<Row>(`api/appointments/${id}/reschedule`, { id_medico: doctor, date: day, time: chosenTime, reason })
+        : await post<Row>('api/appointments', { id_paciente: patient!.id_paciente, id_especialidade: specialty, id_medico: doctor, date: day, time: chosenTime })
       notify(r.message ?? 'Consulta agendada.')
       navigate(`/agenda?data=${day}`)
     } catch (err) {
       notify(err instanceof ApiError ? err.message : 'Não foi possível agendar.', false)
-      get<Slot[]>('api/agenda/horarios', { doctor, data: day }).then((r) => setSlots(r.data)).catch(() => undefined)
+      get<Slot[]>('api/appointments/slots', { doctor, date: day }).then((r) => setSlots(r.data)).catch(() => undefined)
     } finally { setSending(false) }
   }
 

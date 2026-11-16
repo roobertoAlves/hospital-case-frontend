@@ -17,7 +17,7 @@ const PILL = { ativo: ['positive', 'Ativo'], inativo: ['neutral', 'Inativo'], bl
 function Users({ groups }: { groups: Row[] }) {
   const { user } = useSession()
   const notify = useNotice()
-  const { data, loading, error, reload } = useApi<Row[]>('api/admin/usuarios')
+  const { data, loading, error, reload } = useApi<Row[]>('api/admin/users')
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState('')
   const [editing, setEditing] = useState<Row | null>(null)
@@ -66,10 +66,10 @@ function Users({ groups }: { groups: Row[] }) {
                 <Td><Badge tone={PILL[s][0]}>{PILL[s][1]}</Badge></Td>
                 <Td className="text-right whitespace-nowrap">
                   <Button small onClick={() => { setEditing(u); setCheckedIds(String(u.ids_grupos ?? '').split(',').filter(Boolean)) }}>Grupos</Button>
-                  {s === 'bloqueado' && <Button small className="ml-1" onClick={() => action('api/admin/usuario/desbloquear', { id_usuario: u.id_usuario })}>Desbloquear</Button>}
+                  {s === 'bloqueado' && <Button small className="ml-1" onClick={() => action('api/admin/users/unlock', { id_usuario: u.id_usuario })}>Desbloquear</Button>}
                   {!own && (Number(u.status) === 1
-                    ? <Button small variant="perigoTexto" onClick={() => action('api/admin/usuario/status', { id_usuario: u.id_usuario, status: 0 })}>Inativar</Button>
-                    : <Button small variant="texto" onClick={() => action('api/admin/usuario/status', { id_usuario: u.id_usuario, status: 1 })}>Reativar</Button>)}
+                    ? <Button small variant="perigoTexto" onClick={() => action('api/admin/users/status', { id_usuario: u.id_usuario, status: 0 })}>Inativar</Button>
+                    : <Button small variant="texto" onClick={() => action('api/admin/users/status', { id_usuario: u.id_usuario, status: 1 })}>Reativar</Button>)}
                 </Td>
               </tr>
             )
@@ -91,7 +91,7 @@ function Users({ groups }: { groups: Row[] }) {
         </div>
         <div className="mt-5 flex justify-end gap-2">
           <Button onClick={() => setEditing(null)}>Voltar</Button>
-          <Button variant="primario" onClick={async () => { const u = editing!; setEditing(null); await action('api/admin/usuario/grupos', { id_usuario: u.id_usuario, grupos: JSON.stringify(checkedIds.map(Number)) }) }}>Salvar grupos</Button>
+          <Button variant="primario" onClick={async () => { const u = editing!; setEditing(null); await action('api/admin/users/groups', { id_usuario: u.id_usuario, groups: JSON.stringify(checkedIds.map(Number)) }) }}>Salvar grupos</Button>
         </div>
       </Dialog>
     </>
@@ -117,7 +117,7 @@ function PermissionMatrix({ matrix, onSave }: { matrix: Matrix; onSave: () => vo
   const save = async () => {
     setSaving(true)
     try {
-      await Promise.all([...changed].map((g) => post('api/admin/grupo/permissoes', { id_grupo: g, permissoes: JSON.stringify(map[g] ?? []) })))
+      await Promise.all([...changed].map((g) => post('api/admin/groups/permissions', { id_grupo: g, permissions: JSON.stringify(map[g] ?? []) })))
       notify('Permissões atualizadas.'); onSave()
     } catch (e) { notify(e instanceof ApiError ? e.message : 'Não foi possível salvar.', false) }
     finally { setSaving(false) }
@@ -166,15 +166,15 @@ function PermissionMatrix({ matrix, onSave }: { matrix: Matrix; onSave: () => vo
 }
 
 export default function Admin() {
-  const [tab, setTab] = useState<'usuarios' | 'permissoes'>('usuarios')
-  const { data, loading, error, reload } = useApi<Matrix>('api/admin/grupos')
+  const [tab, setTab] = useState<'users' | 'permissions'>('users')
+  const { data, loading, error, reload } = useApi<Matrix>('api/admin/groups')
   return (
     <>
       <PageHeader title="Usuários e permissões" subtitle="Grupos, situação das contas e matriz de permissões."
         actions={<><ButtonLink to="/profissionais" icon={IdCard}>Profissionais</ButtonLink><ButtonLink to="/auditoria" icon={FileText}>Auditoria</ButtonLink></>} />
-      <Tabs tabs={[{ id: 'usuarios', label: 'Usuários' }, { id: 'permissoes', label: 'Permissões por grupo' }]} current={tab} onChange={setTab} />
+      <Tabs tabs={[{ id: 'users', label: 'Usuários' }, { id: 'permissions', label: 'Permissões por grupo' }]} current={tab} onChange={setTab} />
       {loading && !data ? <Loading /> : error || !data ? <Empty>{error?.message}</Empty>
-        : tab === 'usuarios' ? <Users groups={data.groups} /> : <PermissionMatrix matrix={data} onSave={reload} />}
+        : tab === 'users' ? <Users groups={data.groups} /> : <PermissionMatrix matrix={data} onSave={reload} />}
     </>
   )
 }

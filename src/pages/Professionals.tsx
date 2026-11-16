@@ -10,10 +10,10 @@ const TYPE: Record<string, string> = { medico: 'Médico', enfermeiro: 'Enfermeir
 export default function Professionals() {
   const [params, setParams] = useSearchParams()
   const q = params.get('q') ?? ''
-  const tipo = params.get('tipo') ?? ''
-  const inactive = params.get('inativos') === '1'
+  const type = params.get('tipo') ?? ''
+  const inactive = params.get('inactive') === '1'
   const [term, setTerm] = useState(q)
-  const { data, loading, error } = useApi<{ professionals: Row[] }>('api/profissionais', { q, tipo, inativos: inactive ? 1 : null })
+  const { data, loading, error } = useApi<{ professionals: Row[] }>('api/professionals', { q, type: type, inactive: inactive ? 1 : null })
   const list = data?.professionals ?? []
   const account = (t: string) => list.filter((p) => p.tipo === t).length
 
@@ -21,8 +21,8 @@ export default function Professionals() {
     e.preventDefault()
     const n = new URLSearchParams()
     if (term.trim()) n.set('q', term.trim())
-    if (tipo) n.set('tipo', tipo)
-    if (inactive) n.set('inativos', '1')
+    if (type) n.set('tipo', type)
+    if (inactive) n.set('inactive', '1')
     setParams(n)
   }
   const change = (k: string, v: string) => { const n = new URLSearchParams(params); if (v) n.set(k, v); else n.delete(k); setParams(n) }
@@ -41,10 +41,10 @@ export default function Professionals() {
         <label htmlFor="buscaProf" className="sr-only">Nome, CRM ou COREN</label>
         <Input id="buscaProf" type="search" placeholder="Nome, CRM ou COREN" value={term} onChange={(e) => setTerm(e.target.value)} className="max-w-[300px]" />
         <label htmlFor="tipoProf" className="sr-only">Tipo</label>
-        <Select id="tipoProf" value={tipo} onChange={(e) => change('tipo', e.target.value)} className="w-[180px]">
+        <Select id="tipoProf" value={type} onChange={(e) => change('tipo', e.target.value)} className="w-[180px]">
           <option value="">Todos os tipos</option><option value="medico">Médicos</option><option value="enfermeiro">Enfermeiros</option><option value="funcionario">Funcionários</option>
         </Select>
-        <label className="flex items-center gap-2 text-muted"><input type="checkbox" className="size-4 accent-ink" checked={inactive} onChange={(e) => change('inativos', e.target.checked ? '1' : '')} /> Incluir inativos</label>
+        <label className="flex items-center gap-2 text-muted"><input type="checkbox" className="size-4 accent-ink" checked={inactive} onChange={(e) => change('inactive', e.target.checked ? '1' : '')} /> Incluir inativos</label>
         <Button type="submit">Filtrar</Button>
       </form>
       {loading && !data ? <Loading /> : error ? <Empty>{error.message}</Empty> : list.length === 0 ? <Empty>Nenhum profissional com esse filtro.</Empty> : (

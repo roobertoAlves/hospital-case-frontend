@@ -19,7 +19,7 @@ export function PatientSearch({ value, onChoose, locked }: { value: SelectedPati
     window.clearTimeout(timer.current)
     if (q.trim().length < 2) { setList(null); return }
     timer.current = window.setTimeout(async () => {
-      try { const r = await get<SelectedPatient[]>('api/pacientes/busca', { q: q.trim() }); setList(r.data ?? []); setActive(0) } catch { setList([]) }
+      try { const r = await get<SelectedPatient[]>('api/patients/search', { q: q.trim() }); setList(r.data ?? []); setActive(0) } catch { setList([]) }
     }, 250)
   }, [q])
 

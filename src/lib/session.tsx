@@ -34,7 +34,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
 
   const refresh = useCallback(async () => {
-    const { data } = await get<SessionApi>('api/sessao')
+    const { data } = await get<SessionApi>('api/auth/session')
     setCsrf(data.csrf)
     const u = data.authenticated && data.user ? data.user : null
     setUser(u)
@@ -50,13 +50,13 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   }, [refresh])
 
   const login = useCallback(async (email: string, password: string) => {
-    await post('login', { email, password })
+    await post('api/auth/login', { email, password })
     return refresh() // o login gira o token CSRF e carrega permissoes
   }, [refresh])
 
   const logout = useCallback(async () => {
     try {
-      await post('api/sair')
+      await post('api/auth/logout')
     } finally {
       setUser(null)
       await refresh().catch(() => undefined)

@@ -24,13 +24,13 @@ function Scheduler({ specialties, today, fixed, onConfirm, buttonLabel }: {
 
   useEffect(() => {
     if (!specialty) { setDoctors(null); return }
-    get<Row[]>('api/agenda/medicos', { especialidade: specialty }).then((r) => setDoctors(r.data)).catch(() => setDoctors([]))
+    get<Row[]>('api/appointments/doctors', { specialty: specialty }).then((r) => setDoctors(r.data)).catch(() => setDoctors([]))
   }, [specialty])
   useEffect(() => {
     setH('')
     if (!doctor || !day) { setSlots(null); return }
     setLoading(true)
-    get<Slot[]>('api/agenda/horarios', { doctor, data: day }).then((r) => setSlots(r.data)).catch(() => setSlots([])).finally(() => setLoading(false))
+    get<Slot[]>('api/appointments/slots', { doctor, date: day }).then((r) => setSlots(r.data)).catch(() => setSlots([])).finally(() => setLoading(false))
   }, [doctor, day])
 
   return (
@@ -60,7 +60,7 @@ function Scheduler({ specialties, today, fixed, onConfirm, buttonLabel }: {
 
 export default function MyAppointments() {
   const notify = useNotice()
-  const { data, loading, error, reload } = useApi<{ appointments: Row[]; specialties: Row[]; today: string }>('api/portal/consultas')
+  const { data, loading, error, reload } = useApi<{ appointments: Row[]; specialties: Row[]; today: string }>('api/portal/appointments')
   const [mark, setMark] = useState(false)
   const [reschedule, setRescheduling] = useState<Row | null>(null)
   const [cancel, setCancelling] = useState<Row | null>(null)
@@ -83,7 +83,7 @@ export default function MyAppointments() {
       {mark && (
         <Panel title="Marcar consulta" className="mb-5">
           <Scheduler specialties={data.specialties} today={data.today} buttonLabel="Confirmar consulta"
-            onConfirm={async (v) => { if (await call('api/portal/consultas', { id_especialidade: v.specialty, id_medico: v.doctor, data: v.date, hora: v.time })) setMark(false) }} />
+            onConfirm={async (v) => { if (await call('api/portal/appointments', { id_especialidade: v.specialty, id_medico: v.doctor, date: v.date, time: v.time })) setMark(false) }} />
         </Panel>
       )}
       <Panel title="Próximas" meta={String(upcoming.length)} className="mb-5">
@@ -104,7 +104,7 @@ export default function MyAppointments() {
                   </span>
                   {c.status === 'agendada' && (
                     <span className="flex flex-wrap gap-1">
-                      {!c.confirmada_em && <Button small variant="primario" onClick={() => call(`api/portal/consultas/${c.id_consulta}/confirmar`)}>Confirmar presença</Button>}
+                      {!c.confirmada_em && <Button small variant="primario" onClick={() => call(`api/portal/appointments/${c.id_consulta}/confirm`)}>Confirmar presença</Button>}
                       <Button small onClick={() => setRescheduling(c)}>Remarcar</Button>
                       <Button small variant="perigoTexto" onClick={() => setCancelling(c)}>Cancelar</Button>
                     </span>
@@ -138,10 +138,10 @@ export default function MyAppointments() {
       </Panel>
       <Dialog open={!!reschedule} onClose={() => setRescheduling(null)} title="Remarcar consulta" width="max-w-2xl">
         {reschedule && <Scheduler specialties={data.specialties} today={data.today} fixed={{ specialty: String(reschedule.id_especialidade), doctor: String(reschedule.id_medico) }} buttonLabel="Confirmar novo horário"
-          onConfirm={async (v) => { if (await call(`api/portal/consultas/${reschedule.id_consulta}/remarcar`, { id_medico: v.doctor, data: v.date, hora: v.time, motivo: 'pelo portal' })) setRescheduling(null) }} />}
+          onConfirm={async (v) => { if (await call(`api/portal/appointments/${reschedule.id_consulta}/reschedule`, { id_medico: v.doctor, date: v.date, time: v.time, reason: 'pelo portal' })) setRescheduling(null) }} />}
       </Dialog>
       <ReasonDialog open={!!cancel} title="Cancelar consulta" help="O horário fica livre para outra pessoa. Você recebe a confirmação por e-mail." buttonLabel="Cancelar consulta"
-        onClose={() => setCancelling(null)} onConfirm={async (reason) => { await call(`api/portal/consultas/${cancel!.id_consulta}/cancelar`, { reason }); setCancelling(null) }} />
+        onClose={() => setCancelling(null)} onConfirm={async (reason) => { await call(`api/portal/appointments/${cancel!.id_consulta}/cancel`, { reason }); setCancelling(null) }} />
     </>
   )
 }

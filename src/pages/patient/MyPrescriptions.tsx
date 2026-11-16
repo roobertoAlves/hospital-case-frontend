@@ -6,7 +6,7 @@ import { useApi } from '../../lib/useApi'
 type Row = Record<string, unknown>
 
 export default function MyPrescriptions() {
-  const { data, loading, error } = useApi<{ prescriptions: Row[] }>('api/portal/receitas')
+  const { data, loading, error } = useApi<{ prescriptions: Row[] }>('api/portal/prescriptions')
   if (loading && !data) return <Loading />
   if (error || !data) return <Empty>{error?.message}</Empty>
   return (
@@ -19,7 +19,7 @@ export default function MyPrescriptions() {
               meta={<span className="flex items-center gap-2">{formatDate(r.emitida_em)} {r.status === 'cancelada' && <Badge tone="negative">Cancelada</Badge>}</span>}>
               <p className="mb-3 text-[13px] text-muted">{String(r.medico)}</p>
               <ul className="space-y-2">
-                {(r.itens as Row[]).map((it, k) => (
+                {(r.items as Row[]).map((it, k) => (
                   <li key={k} className="rounded-[var(--radius-control)] bg-frame px-3 py-2.5">
                     <span className="block font-medium">{String(it.medicamento)} · {String(it.dosagem)}</span>
                     <span className="block text-[13px] text-muted">{String(it.frequencia)} · {String(it.duracao)}</span>

@@ -12,13 +12,13 @@ type Row = Record<string, unknown>
 export default function TriageQueue() {
   const navigate = useNavigate()
   const notify = useNotice()
-  const { data, loading, error, reload } = useApi<{ queue: Row[]; recent: Row[]; classifications: Row[] }>('api/triagem')
+  const { data, loading, error, reload } = useApi<{ queue: Row[]; recent: Row[]; classifications: Row[] }>('api/triage')
   const [starting, setStarting] = useState<number | null>(null)
 
   const start = async (id: number) => {
     setStarting(id)
     try {
-      await post(`api/triagem/${id}/iniciar`)
+      await post(`api/triage/${id}/start`)
       navigate(`/triagem/${id}`)
     } catch (e) {
       notify(e instanceof ApiError ? e.message : 'Não foi possível iniciar.', false)

@@ -19,7 +19,7 @@ export function useForm<T extends Record<string, unknown>>(initial: T) {
     if (errors[field as string]) setErrors((e) => ({ ...e, [field as string]: '' }))
   }
 
-  const submit = (path: string, options?: { body?: () => Record<string, unknown>; after?: (data: Record<string, unknown> | null) => void }) =>
+  const submit = (path: string, options?: { body?: () => Record<string, unknown>; after?: (data: Record<string, unknown> | null) => void; redirectTo?: (data: Record<string, unknown> | null) => string }) =>
     async (e?: FormEvent) => {
       e?.preventDefault()
       setSending(true)
@@ -28,7 +28,7 @@ export function useForm<T extends Record<string, unknown>>(initial: T) {
         const r = await post<Record<string, unknown> | null>(path, options?.body ? options.body() : values)
         notify(r.message ?? 'Salvo.')
         if (options?.after) options.after(r.data)
-        else if (r.data && typeof r.data.redirect === 'string') navigate('/' + r.data.redirect)
+        else if (options?.redirectTo) navigate(options.redirectTo(r.data))
       } catch (err) {
         if (err instanceof ApiError) {
           if (err.details) setErrors(err.details)

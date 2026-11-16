@@ -21,9 +21,9 @@ export default function VaccinationRoom() {
   const notify = useNotice()
   const [params, setParams] = useSearchParams()
   const day = params.get('data') ?? todayIso()
-  const { data, loading, error, reload } = useApi<{ appointments: Row[]; vaccines: Row[] }>('api/vacinas', { data: day })
+  const { data, loading, error, reload } = useApi<{ appointments: Row[]; vaccines: Row[] }>('api/vaccines', { date: day })
   const [administer, setAdminister] = useState<Row | null>(null)
-  const [lote, setLote] = useState({ lote: '', fabricante: '', observacoes: '' })
+  const [batch, setBatch] = useState({ lote: '', fabricante: '', observacoes: '' })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [cancel, setCancelling] = useState<Row | null>(null)
   const [isNew, setIsNew] = useState(false)
@@ -55,8 +55,8 @@ export default function VaccinationRoom() {
                 <Td><Badge tone={STATUS[String(a.status)][0]}>{STATUS[String(a.status)][1]}</Badge></Td>
                 <Td className="text-right whitespace-nowrap">
                   {a.status === 'agendada' && <>
-                    {can('vacinas.aplicar') && isToday && <Button small variant="primario" onClick={() => { setAdminister(a); setLote({ lote: '', fabricante: '', observacoes: '' }); setErrors({}) }}>Registrar aplicação</Button>}
-                    {can('vacinas.aplicar') && <Button small variant="texto" onClick={() => call(`api/vacinas/agendamentos/${a.id_agendamento}/ausente`)}>Faltou</Button>}
+                    {can('vacinas.aplicar') && isToday && <Button small variant="primario" onClick={() => { setAdminister(a); setBatch({ lote: '', fabricante: '', observacoes: '' }); setErrors({}) }}>Registrar aplicação</Button>}
+                    {can('vacinas.aplicar') && <Button small variant="texto" onClick={() => call(`api/vaccines/appointments/${a.id_agendamento}/no-show`)}>Faltou</Button>}
                     {can('vacinas.agendar') && <Button small variant="perigoTexto" onClick={() => setCancelling(a)}>Cancelar</Button>}
                   </>}
                 </Td>
@@ -67,15 +67,15 @@ export default function VaccinationRoom() {
       )}
       <Dialog open={!!administer} onClose={() => setAdminister(null)} title={`Aplicar ${administer?.vacina ?? ''} · dose ${administer?.dose ?? ''}`}>
         <p className="mb-4 text-[13px] text-muted">{String(administer?.paciente ?? '')}. O registro vai para o cartão de vacinação e não pode ser alterado depois.</p>
-        <form className="grid gap-3" onSubmit={async (e) => { e.preventDefault(); if (await call(`api/vacinas/agendamentos/${administer!.id_agendamento}/aplicar`, lote)) setAdminister(null) }}>
-          <Field label="Lote" name="lote" required error={errors.lote}><Input name="lote" maxLength={40} value={lote.lote} onChange={(e) => setLote({ ...lote, lote: e.target.value })} autoFocus /></Field>
-          <Field label="Fabricante" name="fabricante" error={errors.fabricante}><Input name="fabricante" maxLength={80} value={lote.fabricante} onChange={(e) => setLote({ ...lote, fabricante: e.target.value })} /></Field>
-          <Field label="Observações" name="observacoes" error={errors.observacoes}><Input name="observacoes" maxLength={255} value={lote.observacoes} onChange={(e) => setLote({ ...lote, observacoes: e.target.value })} /></Field>
+        <form className="grid gap-3" onSubmit={async (e) => { e.preventDefault(); if (await call(`api/vaccines/appointments/${administer!.id_agendamento}/administer`, batch)) setAdminister(null) }}>
+          <Field label="Lote" name="lote" required error={errors.lote}><Input name="lote" maxLength={40} value={batch.lote} onChange={(e) => setBatch({ ...batch, lote: e.target.value })} autoFocus /></Field>
+          <Field label="Fabricante" name="fabricante" error={errors.fabricante}><Input name="fabricante" maxLength={80} value={batch.fabricante} onChange={(e) => setBatch({ ...batch, fabricante: e.target.value })} /></Field>
+          <Field label="Observações" name="observacoes" error={errors.observacoes}><Input name="observacoes" maxLength={255} value={batch.observacoes} onChange={(e) => setBatch({ ...batch, observacoes: e.target.value })} /></Field>
           <div className="mt-2 flex justify-end gap-2"><Button type="button" onClick={() => setAdminister(null)}>Voltar</Button><Button type="submit" variant="primario">Registrar</Button></div>
         </form>
       </Dialog>
       <ReasonDialog open={!!cancel} title={`Cancelar vacina de ${cancel?.paciente ?? ''}`} buttonLabel="Cancelar agendamento" onClose={() => setCancelling(null)}
-        onConfirm={async (reason) => { await call(`api/vacinas/agendamentos/${cancel!.id_agendamento}/cancelar`, { reason }); setCancelling(null) }} />
+        onConfirm={async (reason) => { await call(`api/vaccines/appointments/${cancel!.id_agendamento}/cancel`, { reason }); setCancelling(null) }} />
     </>
   )
 }
@@ -92,7 +92,7 @@ function NewBooking({ vaccines, onBook }: { vaccines: Row[]; onBook: () => void 
     setH('')
     if (!day) return
     setLoading(true)
-    get<Slot[]>('api/vacinas/horarios', { data: day }).then((r) => setSlots(r.data)).catch(() => setSlots([])).finally(() => setLoading(false))
+    get<Slot[]>('api/vaccines/slots', { date: day }).then((r) => setSlots(r.data)).catch(() => setSlots([])).finally(() => setLoading(false))
   }, [day])
   return (
     <Panel title="Agendar vacina" className="mb-5">
@@ -109,7 +109,7 @@ function NewBooking({ vaccines, onBook }: { vaccines: Row[]; onBook: () => void 
         <SlotGrid slots={slots} loading={loading} selected={h} onChoose={setH} emptyText="A sala de vacinação abre de segunda a sexta." />
         <div className="flex justify-end">
           <Button variant="primario" disabled={!patient || !vaccine || !h} onClick={async () => {
-            try { const r = await post('api/vacinas/agendamentos', { id_paciente: patient!.id_paciente, id_vacina: vaccine, data: day, hora: h }); notify(r.message ?? 'Agendada.'); onBook() }
+            try { const r = await post('api/vaccines/appointments', { id_paciente: patient!.id_paciente, id_vacina: vaccine, date: day, time: h }); notify(r.message ?? 'Agendada.'); onBook() }
             catch (e) { notify(e instanceof ApiError ? e.message : 'Não foi possível agendar.', false) }
           }}>Confirmar</Button>
         </div>

@@ -16,7 +16,7 @@ export default function PatientRecord() {
   const { id } = useParams()
   const { can } = useSession()
   const notify = useNotice()
-  const { data, loading, error, reload } = useApi<{ patient: Row; history: Row[] }>(`api/pacientes/${id}`)
+  const { data, loading, error, reload } = useApi<{ patient: Row; history: Row[] }>(`api/patients/${id}`)
   if (loading && !data) return <Loading />
   if (error || !data) return <Empty>{error?.message ?? 'Paciente não encontrado.'}</Empty>
   const p = data.patient
@@ -26,7 +26,7 @@ export default function PatientRecord() {
 
   const toggle = async () => {
     try {
-      const r = await post(`api/pacientes/${id}/situacao`, { ativo: active ? '0' : '1' })
+      const r = await post(`api/patients/${id}/status`, { active: active ? '0' : '1' })
       notify(r.message ?? 'Situação alterada.')
       reload()
     } catch (e) { notify(e instanceof ApiError ? e.message : 'Não foi possível alterar.', false) }
@@ -101,7 +101,7 @@ function PortalAccount({ patientId, hasAccount, hasEmail, onLink }: { patientId:
           {can('pacientes.vincular_conta') && (
             <form className="mt-3 flex max-w-[520px] gap-2" onSubmit={async (e) => {
               e.preventDefault()
-              try { const r = await post(`api/pacientes/${patientId}/conta`, { email }); notify(r.message ?? 'Conta ligada.'); onLink() }
+              try { const r = await post(`api/patients/${patientId}/account`, { email }); notify(r.message ?? 'Conta ligada.'); onLink() }
               catch (err) { notify(err instanceof ApiError ? err.message : 'Não foi possível ligar.', false) }
             }}>
               <label htmlFor="emailConta" className="sr-only">E-mail da conta do portal</label>

@@ -8,7 +8,7 @@ import { maskCpf, maskPhone } from '../../lib/masks'
 import { useSession } from '../../lib/session'
 import { PublicScreen } from '../Access'
 
-const EMPTY = { nome: '', cpf: '', data_nascimento: '', email: '', telefone: '', senha: '', confirmar_senha: '', aceite: '' }
+const EMPTY = { nome: '', cpf: '', data_nascimento: '', email: '', telefone: '', password: '', confirm_password: '', accept_terms: '' }
 
 /** Cadastro do paciente pelo portal. CPF ja cadastrado na clinica: codigo no e-mail da ficha. */
 export default function SignUp() {
@@ -25,8 +25,8 @@ export default function SignUp() {
     e.preventDefault()
     setSending(true); setErrors({})
     try {
-      const r = await post<{ link_pending: boolean; record_email?: string }>('api/portal/cadastro', f)
-      await login(f.email.trim().toLowerCase(), f.senha)
+      const r = await post<{ link_pending: boolean; record_email?: string }>('api/portal/register', f)
+      await login(f.email.trim().toLowerCase(), f.password)
       if (r.data.link_pending) { setPending(r.data.record_email ?? 'o e-mail da sua ficha'); return }
       notify('Conta criada. Bem-vindo(a)!')
       navigate('/minha-saude', { replace: true })
@@ -63,13 +63,13 @@ export default function SignUp() {
         {field('data_nascimento', 'Nascimento', { inputType: 'date', ac: 'bday' })}
         {field('email', 'E-mail', { inputType: 'email', ac: 'email', wrapperClass: 'sm:col-span-2', help: 'Será o seu login.' })}
         {field('telefone', 'Celular', { mask: maskPhone, ac: 'tel', wrapperClass: 'sm:col-span-2' })}
-        {field('senha', 'Senha', { inputType: 'password', ac: 'new-password', help: 'Mínimo de 8 caracteres, com letras e números.' })}
-        {field('confirmar_senha', 'Confirme a senha', { inputType: 'password', ac: 'new-password' })}
+        {field('password', 'Senha', { inputType: 'password', ac: 'new-password', help: 'Mínimo de 8 caracteres, com letras e números.' })}
+        {field('confirm_password', 'Confirme a senha', { inputType: 'password', ac: 'new-password' })}
         <label className="flex items-start gap-2.5 text-[13px] sm:col-span-2">
-          <input type="checkbox" className="mt-0.5 size-4 accent-ink" checked={f.aceite === '1'} onChange={(e) => change('aceite', e.target.checked ? '1' : '')} />
+          <input type="checkbox" className="mt-0.5 size-4 accent-ink" checked={f.accept_terms === '1'} onChange={(e) => change('accept_terms', e.target.checked ? '1' : '')} />
           <span>Autorizo o uso dos meus dados para agendamento e atendimento na clínica, conforme a LGPD. Os dados de saúde só são vistos pela equipe que me atende.</span>
         </label>
-        {errors.aceite && <p className="-mt-2 text-[12px] text-negative sm:col-span-2">{errors.aceite}</p>}
+        {errors.accept_terms && <p className="-mt-2 text-[12px] text-negative sm:col-span-2">{errors.accept_terms}</p>}
         {errors.cpf?.includes('recepção') && <div className="sm:col-span-2"><Alert>{errors.cpf}</Alert></div>}
         <Button type="submit" variant="primario" loading={sending} className="h-11 sm:col-span-2">Criar conta</Button>
         <p className="text-center text-[13px] text-muted sm:col-span-2">Já tem conta? <Link to="/login" className="font-medium text-brand-700 hover:underline">Entrar</Link></p>

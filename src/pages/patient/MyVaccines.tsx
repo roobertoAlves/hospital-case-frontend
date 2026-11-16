@@ -13,7 +13,7 @@ interface Data { administered: Row[]; scheduled: Row[]; catalog: Row[]; today: s
 
 export default function MyVaccines() {
   const notify = useNotice()
-  const { data, loading, error, reload } = useApi<Data>('api/portal/vacinas')
+  const { data, loading, error, reload } = useApi<Data>('api/portal/vaccines')
   const [vaccine, setVaccine] = useState('')
   const [day, setDay] = useState('')
   const [slots, setSlots] = useState<Slot[] | null>(null)
@@ -27,7 +27,7 @@ export default function MyVaccines() {
     setH('')
     if (!day || !vaccine) { setSlots(null); return }
     setLoadingSlots(true)
-    get<Slot[]>('api/vacinas/horarios', { data: day }).then((r) => setSlots(r.data)).catch(() => setSlots([])).finally(() => setLoadingSlots(false))
+    get<Slot[]>('api/vaccines/slots', { date: day }).then((r) => setSlots(r.data)).catch(() => setSlots([])).finally(() => setLoadingSlots(false))
   }, [day, vaccine])
 
   if (loading && !data) return <Loading />
@@ -76,7 +76,7 @@ export default function MyVaccines() {
               {vaccine && <SlotGrid slots={slots} loading={loadingSlots} selected={h} onChoose={setH} emptyText="A sala de vacinação abre de segunda a sexta." />}
               <Button variant="primario" icon={Syringe} disabled={!vaccine || !h} loading={sending} onClick={async () => {
                 setSending(true)
-                try { const r = await post('api/portal/vacinas', { id_vacina: vaccine, data: day, hora: h }); notify(r.message ?? 'Agendada.'); setVaccine(''); reload() }
+                try { const r = await post('api/portal/vaccines', { id_vacina: vaccine, date: day, time: h }); notify(r.message ?? 'Agendada.'); setVaccine(''); reload() }
                 catch (e) { notify(e instanceof ApiError ? e.message : 'Não foi possível agendar.', false) }
                 finally { setSending(false) }
               }}>Agendar</Button>
@@ -102,7 +102,7 @@ export default function MyVaccines() {
       </div>
       <ReasonDialog open={!!cancel} title="Cancelar vacina" buttonLabel="Cancelar agendamento" onClose={() => setCancelling(null)}
         onConfirm={async (reason) => {
-          try { const r = await post(`api/portal/vacinas/${cancel!.id_agendamento}/cancelar`, { reason }); notify(r.message ?? 'Cancelado.'); reload() }
+          try { const r = await post(`api/portal/vaccines/${cancel!.id_agendamento}/cancel`, { reason }); notify(r.message ?? 'Cancelado.'); reload() }
           catch (e) { notify(e instanceof ApiError ? e.message : 'Não foi possível cancelar.', false) }
           setCancelling(null)
         }} />

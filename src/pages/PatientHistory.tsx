@@ -14,7 +14,7 @@ const n = (v: unknown) => (v == null ? '—' : String(v).replace(/\.0+$/, '').re
 /** Historico filtrado por perfil (decidido no backend: HistoricoController.nivel). */
 export default function PatientHistory() {
   const { id } = useParams()
-  const { data, loading, error } = useApi<Data>(`api/pacientes/${id}/historico`)
+  const { data, loading, error } = useApi<Data>(`api/patients/${id}/history`)
   if (loading && !data) return <Loading />
   if (error || !data) return <Empty>{error?.message ?? 'Histórico indisponível.'}</Empty>
   const p = data.patient
@@ -61,7 +61,7 @@ export default function PatientHistory() {
                     {data.prescriptions.map((r, i) => (
                       <li key={i} className="py-2.5 first:pt-0 text-[13px]">
                         <p className="text-[12px] text-muted">{formatDate(r.emitida_em)} · {String(r.medico)}{r.status === 'cancelada' ? ' · cancelada' : ''}</p>
-                        {(r.itens as Row[]).map((it, k) => <p key={k}>{String(it.medicamento)} {String(it.dosagem)} · {String(it.frequencia)}</p>)}
+                        {(r.items as Row[]).map((it, k) => <p key={k}>{String(it.medicamento)} {String(it.dosagem)} · {String(it.frequencia)}</p>)}
                       </li>
                     ))}
                   </ul>

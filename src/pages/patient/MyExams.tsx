@@ -16,10 +16,10 @@ const ORDER: Record<string, ['warning' | 'positive' | 'negative', string]> = {
 
 export default function MyExams() {
   const notify = useNotice()
-  const { data, loading, error, reload } = useApi<Data>('api/portal/exames')
+  const { data, loading, error, reload } = useApi<Data>('api/portal/exams')
   const [mark, setMark] = useState(false)
-  const [tipo, setTipo] = useState('')
-  const [origem, setOrigem] = useState('')           // "s:ID" (solicitacao) | "p:ID" (pedido) | "novo"
+  const [type, setType] = useState('')
+  const [origin, setOrigin] = useState('')           // "s:ID" (solicitacao) | "p:ID" (pedido) | "novo"
   const [file, setFile] = useState<File | null>(null)
   const [day, setDay] = useState('')
   const [slots, setSlots] = useState<Slot[] | null>(null)
@@ -32,30 +32,30 @@ export default function MyExams() {
   useEffect(() => { if (data && !day) setDay(data.today) }, [data, day])
   useEffect(() => {
     setH('')
-    if (!tipo || !day) { setSlots(null); return }
+    if (!type || !day) { setSlots(null); return }
     setLoadingSlots(true)
-    get<Slot[]>('api/exames/horarios', { tipo, data: day }).then((r) => setSlots(r.data)).catch(() => setSlots([])).finally(() => setLoadingSlots(false))
-  }, [tipo, day])
+    get<Slot[]>('api/exams/slots', { type: type, date: day }).then((r) => setSlots(r.data)).catch(() => setSlots([])).finally(() => setLoadingSlots(false))
+  }, [type, day])
 
   if (loading && !data) return <Loading />
   if (error || !data) return <Empty>{error?.message}</Empty>
-  const t = data.types.find((x) => String(x.id_tipo_exame) === tipo)
+  const t = data.types.find((x) => String(x.id_tipo_exame) === type)
   const requires = String(t?.exige_pedido) === '1'
   const validOrders = data.medical_orders.filter((p) => p.status !== 'recusado')
-  const ready = !!tipo && !!h && (!requires || (origem && (origem !== 'novo' || file)))
+  const ready = !!type && !!h && (!requires || (origin && (origin !== 'novo' || file)))
 
   const confirm = async () => {
     setSending(true)
     try {
-      let orderId = origem.startsWith('p:') ? origem.slice(2) : ''
-      if (requires && origem === 'novo' && file) {
+      let orderId = origin.startsWith('p:') ? origin.slice(2) : ''
+      if (requires && origin === 'novo' && file) {
         if (file.size > 5 * 1024 * 1024) { notify('Arquivo maior que 5 MB.', false); return }
-        const env = await post<{ id_pedido: number }>('api/portal/pedidos', { nome_arquivo: file.name, conteudo: await readFile(file), id_tipo_exame: tipo })
+        const env = await post<{ id_pedido: number }>('api/portal/medical-orders', { file_name: file.name, content: await readFile(file), id_tipo_exame: type })
         orderId = String(env.data.id_pedido)
       }
-      const r = await post('api/portal/exames', { id_tipo_exame: tipo, data: day, hora: h, id_solicitacao: origem.startsWith('s:') ? origem.slice(2) : '', id_pedido: orderId })
+      const r = await post('api/portal/exams', { id_tipo_exame: type, date: day, time: h, id_solicitacao: origin.startsWith('s:') ? origin.slice(2) : '', id_pedido: orderId })
       notify(r.message ?? 'Exame marcado.')
-      setMark(false); setTipo(''); setOrigem(''); setFile(null)
+      setMark(false); setType(''); setOrigin(''); setFile(null)
       reload()
     } catch (e) {
       notify(e instanceof ApiError ? e.message : 'Não foi possível marcar.', false)
@@ -72,7 +72,7 @@ export default function MyExams() {
         <Panel title="Marcar exame" className="mb-5">
           <div className="grid gap-4">
             <Field label="Exame" name="tipoExame">
-              <Select name="tipoExame" value={tipo} onChange={(e) => { setTipo(e.target.value); setOrigem('') }}>
+              <Select name="tipoExame" value={type} onChange={(e) => { setType(e.target.value); setOrigin('') }}>
                 <option value="">Escolha…</option>
                 {groupBy(data.types, 'categoria').map(([g, list]) => (
                   <optgroup key={g} label={categoryLabel(g)}>
@@ -86,24 +86,24 @@ export default function MyExams() {
               <fieldset className="grid gap-2">
                 <legend className="mb-1 text-[13px] font-medium">Pedido médico <span className="text-negative">*</span></legend>
                 {data.exam_requests.map((s) => (
-                  <label key={`s${s.id_exame}`} className={cx('flex cursor-pointer items-center gap-3 rounded-[var(--radius-card)] border p-3', origem === `s:${s.id_exame}` ? 'border-ink' : 'border-line')}>
-                    <input type="radio" name="origem" className="accent-ink" checked={origem === `s:${s.id_exame}`} onChange={() => setOrigem(`s:${s.id_exame}`)} />
+                  <label key={`s${s.id_exame}`} className={cx('flex cursor-pointer items-center gap-3 rounded-[var(--radius-card)] border p-3', origin === `s:${s.id_exame}` ? 'border-ink' : 'border-line')}>
+                    <input type="radio" name="origem" className="accent-ink" checked={origin === `s:${s.id_exame}`} onChange={() => setOrigin(`s:${s.id_exame}`)} />
                     <span><span className="block font-medium">{String(s.nome_exame)}</span><span className="block text-[12px] text-muted">Pedido de {String(s.medico)} em {formatDate(s.solicitado_em)} (no sistema, dispensa anexo)</span></span>
                   </label>
                 ))}
                 {validOrders.map((p) => (
-                  <label key={`p${p.id_pedido}`} className={cx('flex cursor-pointer items-center gap-3 rounded-[var(--radius-card)] border p-3', origem === `p:${p.id_pedido}` ? 'border-ink' : 'border-line')}>
-                    <input type="radio" name="origem" className="accent-ink" checked={origem === `p:${p.id_pedido}`} onChange={() => setOrigem(`p:${p.id_pedido}`)} />
+                  <label key={`p${p.id_pedido}`} className={cx('flex cursor-pointer items-center gap-3 rounded-[var(--radius-card)] border p-3', origin === `p:${p.id_pedido}` ? 'border-ink' : 'border-line')}>
+                    <input type="radio" name="origem" className="accent-ink" checked={origin === `p:${p.id_pedido}`} onChange={() => setOrigin(`p:${p.id_pedido}`)} />
                     <Paperclip className="size-4 text-faint" />
                     <span className="grow"><span className="block font-medium">{String(p.nome_original)}</span><span className="block text-[12px] text-muted">Enviado em {formatDateTime(p.enviado_em)}</span></span>
                     <Badge tone={ORDER[String(p.status)][0]}>{ORDER[String(p.status)][1]}</Badge>
                   </label>
                 ))}
-                <label className={cx('flex cursor-pointer items-center gap-3 rounded-[var(--radius-card)] border border-dashed p-3', origem === 'novo' ? 'border-ink' : 'border-control')}>
-                  <input type="radio" name="origem" className="accent-ink" checked={origem === 'novo'} onChange={() => { setOrigem('novo'); input.current?.click() }} />
+                <label className={cx('flex cursor-pointer items-center gap-3 rounded-[var(--radius-card)] border border-dashed p-3', origin === 'novo' ? 'border-ink' : 'border-control')}>
+                  <input type="radio" name="origem" className="accent-ink" checked={origin === 'novo'} onChange={() => { setOrigin('novo'); input.current?.click() }} />
                   <FileUp className="size-4 text-brand-700" />
                   <span className="grow">{file ? <><strong>{file.name}</strong> <span className="text-[12px] text-muted">({Math.ceil(file.size / 1024)} KB)</span></> : 'Anexar pedido agora (PDF, JPG ou PNG, até 5 MB)'}</span>
-                  <input ref={input} type="file" accept="application/pdf,image/jpeg,image/png" className="sr-only" onChange={(e) => { setFile(e.target.files?.[0] ?? null); setOrigem('novo') }} />
+                  <input ref={input} type="file" accept="application/pdf,image/jpeg,image/png" className="sr-only" onChange={(e) => { setFile(e.target.files?.[0] ?? null); setOrigin('novo') }} />
                 </label>
               </fieldset>
             )}
@@ -150,7 +150,7 @@ export default function MyExams() {
                 {data.medical_orders.map((p) => (
                   <li key={String(p.id_pedido)} className="py-2.5 first:pt-0">
                     <div className="flex items-center gap-2">
-                      <button className="grow truncate text-left font-medium text-brand-700 hover:underline" onClick={() => openFile(`api/portal/pedidos/${p.id_pedido}/arquivo`).catch((e) => notify(e.message, false))}>{String(p.nome_original)}</button>
+                      <button className="grow truncate text-left font-medium text-brand-700 hover:underline" onClick={() => openFile(`api/portal/medical-orders/${p.id_pedido}/file`).catch((e) => notify(e.message, false))}>{String(p.nome_original)}</button>
                       <Badge tone={ORDER[String(p.status)][0]}>{ORDER[String(p.status)][1]}</Badge>
                     </div>
                     <p className="text-[12px] text-muted">{formatDateTime(p.enviado_em)}{p.exame ? ` · ${p.exame}` : ''}</p>
@@ -164,7 +164,7 @@ export default function MyExams() {
       </div>
       <ReasonDialog open={!!cancel} title={`Cancelar ${cancel?.exame ?? 'exame'}`} buttonLabel="Cancelar exame" onClose={() => setCancelling(null)}
         onConfirm={async (reason) => {
-          try { const r = await post(`api/portal/exames/${cancel!.id_exame_agendado}/cancelar`, { reason }); notify(r.message ?? 'Exame cancelado.'); reload() }
+          try { const r = await post(`api/portal/exams/${cancel!.id_exame_agendado}/cancel`, { reason }); notify(r.message ?? 'Exame cancelado.'); reload() }
           catch (e) { notify(e instanceof ApiError ? e.message : 'Não foi possível cancelar.', false) }
           setCancelling(null)
         }} />

@@ -24,13 +24,13 @@ const SEX: Record<string, string> = { feminino: 'Feminino', masculino: 'Masculin
 export default function EncounterScreen() {
   const { id } = useParams()
   const notify = useNotice()
-  const { data, loading, error, reload } = useApi<Data>(`api/atendimento/${id}`)
+  const { data, loading, error, reload } = useApi<Data>(`api/encounters/${id}`)
   const [record, setRecord] = useState<Record<string, string>>({})
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [busy, setBusy] = useState('')
   const [confirmFinish, setConfirmFinish] = useState(false)
-  const [texto, setTexto] = useState('')
-  const [rx, setRx] = useState({ orientacoes_gerais: '', itens: [{ ...EMPTY_ITEM }] })
+  const [text, setText] = useState('')
+  const [rx, setRx] = useState({ orientacoes_gerais: '', items: [{ ...EMPTY_ITEM }] })
   const [exam, setExam] = useState({ nome_exame: '', codigo: '', justificativa: '' })
   const [allergy, setAllergy] = useState({ substancia: '', reacao: '', gravidade: '' })
   const [cancel, setCancelling] = useState<{ url: string; title: string; help: string } | null>(null)
@@ -62,11 +62,11 @@ export default function EncounterScreen() {
     finally { setBusy('') }
   }
 
-  const save = (e: FormEvent) => { e.preventDefault(); call('salvar', `api/atendimento/${id}/prontuario`, record) }
+  const save = (e: FormEvent) => { e.preventDefault(); call('salvar', `api/encounters/${id}/record`, record) }
   const issuePrescription = (e: FormEvent) => {
     e.preventDefault()
-    call('rx', `api/atendimento/${id}/receitas`, { orientacoes_gerais: rx.orientacoes_gerais, itens: rx.itens.filter((i) => i.medicamento.trim()) },
-      () => setRx({ orientacoes_gerais: '', itens: [{ ...EMPTY_ITEM }] }))
+    call('rx', `api/encounters/${id}/prescriptions`, { orientacoes_gerais: rx.orientacoes_gerais, items: rx.items.filter((i) => i.medicamento.trim()) },
+      () => setRx({ orientacoes_gerais: '', items: [{ ...EMPTY_ITEM }] }))
   }
 
   return (
@@ -77,7 +77,7 @@ export default function EncounterScreen() {
         subtitle={<span className="flex flex-wrap items-center gap-2">{years !== null && `${years} anos ·`} {SEX[String(c.sexo)] ?? 'Sexo não informado'} · {String(c.especialidade)} · consulta das {formatTime(c.data_hora)} <Badge tone={statusTone}>{statusLabel}</Badge></span>}
         actions={<>
           <ButtonLink to={`/pacientes/${c.id_paciente}/historico`} icon={FileText}>Histórico</ButtonLink>
-          {waiting && <Button variant="primario" loading={busy === 'iniciar'} onClick={() => call('iniciar', `api/atendimento/${id}/iniciar`)}>Iniciar atendimento</Button>}
+          {waiting && <Button variant="primario" loading={busy === 'iniciar'} onClick={() => call('iniciar', `api/encounters/${id}/start`)}>Iniciar atendimento</Button>}
         </>}
       />
       <div className="mb-5">
@@ -123,9 +123,9 @@ export default function EncounterScreen() {
                 </ul>
               )}
               {(inEncounter || finished) && (
-                <form className="mt-4" onSubmit={(e) => { e.preventDefault(); call('evol', `api/atendimento/${id}/evolucoes`, { tipo: finished ? 'adendo' : 'evolucao', texto }, () => setTexto('')) }}>
+                <form className="mt-4" onSubmit={(e) => { e.preventDefault(); call('evol', `api/encounters/${id}/progress-notes`, { tipo: finished ? 'adendo' : 'evolucao', texto: text }, () => setText('')) }}>
                   <Field label={finished ? 'Novo adendo' : 'Nova evolução'} name="texto" error={errors.texto}>
-                    <TextArea name="texto" rows={2} value={texto} onChange={(e) => setTexto(e.target.value)} />
+                    <TextArea name="texto" rows={2} value={text} onChange={(e) => setText(e.target.value)} />
                   </Field>
                   <div className="mt-3 flex justify-end"><Button type="submit" loading={busy === 'evol'}>{finished ? 'Incluir adendo' : 'Incluir evolução'}</Button></div>
                 </form>
@@ -144,11 +144,11 @@ export default function EncounterScreen() {
                     {r.status === 'cancelada' ? <Badge tone="negative">Cancelada</Badge> : <Badge tone="positive">Emitida</Badge>}
                     <span className="ml-auto flex gap-1">
                       <ButtonLink to={`/receitas/${r.id_receita}`} small icon={Printer}>Imprimir</ButtonLink>
-                      {r.status !== 'cancelada' && <Button small variant="perigoTexto" onClick={() => setCancelling({ url: `api/receitas/${r.id_receita}/cancelar`, title: `Cancelar a receita nº ${r.id_receita}`, help: 'A receita cancelada continua no histórico, marcada como cancelada.' })}>Cancelar</Button>}
+                      {r.status !== 'cancelada' && <Button small variant="perigoTexto" onClick={() => setCancelling({ url: `api/prescriptions/${r.id_receita}/cancel`, title: `Cancelar a receita nº ${r.id_receita}`, help: 'A receita cancelada continua no histórico, marcada como cancelada.' })}>Cancelar</Button>}
                     </span>
                   </div>
                   <ol className="list-decimal space-y-1 pl-5 text-[13px]">
-                    {(r.itens as Row[]).map((i, k) => <li key={k}><strong>{String(i.medicamento)}</strong> {String(i.dosagem)} {i.via ? `· ${i.via}` : ''} · {String(i.frequencia)} · {String(i.duracao)}{i.orientacoes ? ` · ${i.orientacoes}` : ''}</li>)}
+                    {(r.items as Row[]).map((i, k) => <li key={k}><strong>{String(i.medicamento)}</strong> {String(i.dosagem)} {i.via ? `· ${i.via}` : ''} · {String(i.frequencia)} · {String(i.duracao)}{i.orientacoes ? ` · ${i.orientacoes}` : ''}</li>)}
                   </ol>
                   {r.motivo_cancelamento ? <p className="mt-2 text-[12px] text-muted">Motivo do cancelamento: {String(r.motivo_cancelamento)}</p> : null}
                 </li>
@@ -158,20 +158,20 @@ export default function EncounterScreen() {
               <form onSubmit={issuePrescription} className="rounded-[var(--radius-card)] bg-raised p-4" noValidate>
                 <p className="mb-3 font-medium">Nova receita</p>
                 <div className="space-y-2">
-                  {rx.itens.map((it, k) => (
+                  {rx.items.map((it, k) => (
                     <div key={k} className="grid gap-2 sm:grid-cols-[2fr_1fr_0.8fr_1.2fr_1fr_auto]">
                       {(['medicamento', 'dosagem', 'via', 'frequencia', 'duracao'] as const).map((field) => (
                         <Input key={field} aria-label={`${field} do item ${k + 1}`} value={it[field]}
                           placeholder={{ medicamento: 'Medicamento', dosagem: '500 mg', via: 'oral', frequencia: '8 em 8 horas', duracao: '7 dias' }[field]}
-                          onChange={(e) => setRx({ ...rx, itens: rx.itens.map((x, j) => (j === k ? { ...x, [field]: e.target.value } : x)) })} />
+                          onChange={(e) => setRx({ ...rx, items: rx.items.map((x, j) => (j === k ? { ...x, [field]: e.target.value } : x)) })} />
                       ))}
-                      <Button type="button" variant="perigoTexto" aria-label="Remover item" disabled={rx.itens.length === 1}
-                        onClick={() => setRx({ ...rx, itens: rx.itens.filter((_, j) => j !== k) })}><Trash2 className="size-4" /></Button>
+                      <Button type="button" variant="perigoTexto" aria-label="Remover item" disabled={rx.items.length === 1}
+                        onClick={() => setRx({ ...rx, items: rx.items.filter((_, j) => j !== k) })}><Trash2 className="size-4" /></Button>
                     </div>
                   ))}
                 </div>
-                {errors.itens && <p className="mt-2 text-[12px] text-negative">{errors.itens}</p>}
-                <Button type="button" variant="texto" small icon={Plus} className="mt-2" disabled={rx.itens.length >= 20} onClick={() => setRx({ ...rx, itens: [...rx.itens, { ...EMPTY_ITEM }] })}>Adicionar medicamento</Button>
+                {errors.items && <p className="mt-2 text-[12px] text-negative">{errors.items}</p>}
+                <Button type="button" variant="texto" small icon={Plus} className="mt-2" disabled={rx.items.length >= 20} onClick={() => setRx({ ...rx, items: [...rx.items, { ...EMPTY_ITEM }] })}>Adicionar medicamento</Button>
                 <Field label="Orientações gerais" name="orientacoes_gerais" className="mt-3">
                   <TextArea name="orientacoes_gerais" rows={2} value={rx.orientacoes_gerais} onChange={(e) => setRx({ ...rx, orientacoes_gerais: e.target.value })} />
                 </Field>
@@ -188,13 +188,13 @@ export default function EncounterScreen() {
                   <span className="grow"><span className="block font-medium">{String(e.nome_exame)}{e.codigo ? ` · ${e.codigo}` : ''}</span>
                     <span className="block text-[12px] text-muted">{formatDateTime(e.solicitado_em)}{e.justificativa ? ` · ${e.justificativa}` : ''}</span></span>
                   {e.status === 'cancelado' ? <Badge tone="negative">Cancelado</Badge>
-                    : <Button small variant="perigoTexto" onClick={() => setCancelling({ url: `api/solicitacoes-exame/${e.id_exame}/cancelar`, title: `Cancelar o pedido de ${e.nome_exame}`, help: 'O pedido cancelado continua no histórico.' })}>Cancelar</Button>}
+                    : <Button small variant="perigoTexto" onClick={() => setCancelling({ url: `api/exam-requests/${e.id_exame}/cancel`, title: `Cancelar o pedido de ${e.nome_exame}`, help: 'O pedido cancelado continua no histórico.' })}>Cancelar</Button>}
                 </li>
               ))}
             </ul>
             {canPrescribe && (
               <form className="grid gap-3 rounded-[var(--radius-card)] bg-raised p-4 sm:grid-cols-6" noValidate
-                onSubmit={(ev) => { ev.preventDefault(); call('exame', `api/atendimento/${id}/exames`, exam, () => setExam({ nome_exame: '', codigo: '', justificativa: '' })) }}>
+                onSubmit={(ev) => { ev.preventDefault(); call('exame', `api/encounters/${id}/exam-requests`, exam, () => setExam({ nome_exame: '', codigo: '', justificativa: '' })) }}>
                 <Field label="Exame" name="nome_exame" required error={errors.nome_exame} className="sm:col-span-4"><Input name="nome_exame" maxLength={200} value={exam.nome_exame} onChange={(e) => setExam({ ...exam, nome_exame: e.target.value })} /></Field>
                 <Field label="Código" name="codigo" help="Opcional (ex.: TUSS)" className="sm:col-span-2"><Input name="codigo" maxLength={20} value={exam.codigo} onChange={(e) => setExam({ ...exam, codigo: e.target.value })} /></Field>
                 <Field label="Justificativa" name="justificativa" className="sm:col-span-6"><Input name="justificativa" maxLength={500} value={exam.justificativa} onChange={(e) => setExam({ ...exam, justificativa: e.target.value })} /></Field>
@@ -228,7 +228,7 @@ export default function EncounterScreen() {
           </Panel>
           {canPrescribe && (
             <Panel title="Registrar alergia" delay={0.1}>
-              <form className="grid gap-3" noValidate onSubmit={(ev) => { ev.preventDefault(); call('alergia', `api/atendimento/${id}/alergias`, allergy, () => setAllergy({ substancia: '', reacao: '', gravidade: '' })) }}>
+              <form className="grid gap-3" noValidate onSubmit={(ev) => { ev.preventDefault(); call('alergia', `api/encounters/${id}/allergies`, allergy, () => setAllergy({ substancia: '', reacao: '', gravidade: '' })) }}>
                 <Field label="Substância" name="substancia" required error={errors.substancia}><Input name="substancia" maxLength={150} value={allergy.substancia} onChange={(e) => setAllergy({ ...allergy, substancia: e.target.value })} /></Field>
                 <Field label="Reação" name="reacao"><Input name="reacao" maxLength={255} value={allergy.reacao} onChange={(e) => setAllergy({ ...allergy, reacao: e.target.value })} /></Field>
                 <Field label="Gravidade" name="gravidade">
@@ -261,7 +261,7 @@ export default function EncounterScreen() {
         <p className="text-muted">Depois de finalizado, o prontuário não pode mais ser alterado; só aceita adendos. A consulta fica como realizada.</p>
         <div className="mt-5 flex justify-end gap-2">
           <Button onClick={() => setConfirmFinish(false)}>Voltar</Button>
-          <Button variant="primario" loading={busy === 'fim'} onClick={() => { setConfirmFinish(false); call('fim', `api/atendimento/${id}/finalizar`, record) }}>Finalizar</Button>
+          <Button variant="primario" loading={busy === 'fim'} onClick={() => { setConfirmFinish(false); call('fim', `api/encounters/${id}/finish`, record) }}>Finalizar</Button>
         </div>
       </Dialog>
       <ReasonDialog open={!!cancel} title={cancel?.title ?? ''} help={cancel?.help} buttonLabel="Confirmar cancelamento"

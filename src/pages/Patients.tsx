@@ -8,30 +8,33 @@ import { useApi } from '../lib/useApi'
 
 interface PatientList {
   q: string
-  inativos: boolean
-  resultado: { itens: Record<string, unknown>[]; total: number; pagina: number; porPagina: number }
+  inactive: boolean
+  items: Record<string, unknown>[]
+  total: number
+  page: number
+  total_pages: number
 }
 
 export default function Patients() {
   const { can } = useSession()
   const [params, setParams] = useSearchParams()
   const q = params.get('q') ?? ''
-  const inactive = params.get('inativos') === '1'
-  const page = Number(params.get('pagina') ?? 1)
+  const inactive = params.get('inactive') === '1'
+  const page = Number(params.get('page') ?? 1)
   const [term, setTerm] = useState(q)
-  const { data, loading, error } = useApi<PatientList>('api/pacientes', { q, inativos: inactive ? 1 : null, page })
+  const { data, loading, error } = useApi<PatientList>('api/patients', { q, inactive: inactive ? 1 : null, page })
 
   const search = (e: FormEvent) => {
     e.preventDefault()
     const n = new URLSearchParams()
     if (term.trim()) n.set('q', term.trim())
-    if (inactive) n.set('inativos', '1')
+    if (inactive) n.set('inactive', '1')
     setParams(n)
   }
-  const goTo = (p: number) => { const n = new URLSearchParams(params); n.set('pagina', String(p)); setParams(n) }
+  const goTo = (p: number) => { const n = new URLSearchParams(params); n.set('page', String(p)); setParams(n) }
 
-  const r = data?.resultado
-  const totalPages = r ? Math.max(1, Math.ceil(r.total / r.porPagina)) : 1
+  const r = data
+  const totalPages = r ? r.total_pages : 1
 
   return (
     <>
@@ -44,19 +47,19 @@ export default function Patients() {
         <label htmlFor="buscaLista" className="sr-only">Nome ou CPF</label>
         <Input id="buscaLista" type="search" value={term} onChange={(e) => setTerm(e.target.value)} placeholder="Nome ou CPF" className="max-w-[340px]" />
         <label className="flex items-center gap-2 text-muted">
-          <input type="checkbox" checked={inactive} onChange={(e) => { const n = new URLSearchParams(params); if (e.target.checked) n.set('inativos', '1'); else n.delete('inativos'); n.delete('pagina'); setParams(n) }} className="size-4 accent-ink" />
+          <input type="checkbox" checked={inactive} onChange={(e) => { const n = new URLSearchParams(params); if (e.target.checked) n.set('inactive', '1'); else n.delete('inactive'); n.delete('pagina'); setParams(n) }} className="size-4 accent-ink" />
           Incluir inativos
         </label>
         <Button type="submit">Buscar</Button>
         {(q || inactive) && <ButtonLink to="/pacientes" variant="texto">Limpar</ButtonLink>}
       </form>
 
-      {loading && !data ? <Loading /> : error ? <Empty>{error.message}</Empty> : r && r.itens.length === 0 ? (
+      {loading && !data ? <Loading /> : error ? <Empty>{error.message}</Empty> : r && r.items.length === 0 ? (
         <Empty icon={Users}>{q ? 'Nenhum paciente com esse nome ou CPF.' : 'Nenhum paciente cadastrado ainda.'}</Empty>
       ) : r && (
         <Panel noPadding>
           <Table header={<><Th>Paciente</Th><Th className="num">CPF</Th><Th className="hidden md:table-cell">Idade</Th><Th className="hidden md:table-cell">Telefone</Th><Th className="hidden sm:table-cell">Situação</Th><Th /></>}>
-            {r.itens.map((p) => {
+            {r.items.map((p) => {
               const active = Number(p.ativo) === 1
               return (
                 <tr key={String(p.id_paciente)}>
@@ -74,10 +77,10 @@ export default function Patients() {
             })}
           </Table>
           <div className="flex items-center justify-between border-t border-rule px-4 py-3 text-[13px] text-muted">
-            <span>Página {r.pagina} de {totalPages}</span>
+            <span>Página {r.page} de {totalPages}</span>
             <span className="flex gap-2">
-              {r.pagina > 1 && <Button small icon={ChevronLeft} onClick={() => goTo(r.pagina - 1)}>Anterior</Button>}
-              {r.pagina < totalPages && <Button small onClick={() => goTo(r.pagina + 1)}>Próxima <ChevronRight className="size-4" /></Button>}
+              {r.page > 1 && <Button small icon={ChevronLeft} onClick={() => goTo(r.page - 1)}>Anterior</Button>}
+              {r.page < totalPages && <Button small onClick={() => goTo(r.page + 1)}>Próxima <ChevronRight className="size-4" /></Button>}
             </span>
           </div>
         </Panel>

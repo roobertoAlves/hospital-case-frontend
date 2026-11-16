@@ -22,7 +22,7 @@ const STEPS = [
 export default function Home() {
   const navigate = useNavigate()
   const [q, setQ] = useState('')
-  const { data } = useApi<Catalog>('api/publico/catalogo')
+  const { data } = useApi<Catalog>('api/public/catalog')
   const search = (e: FormEvent) => { e.preventDefault(); navigate(`/servicos/exames?q=${encodeURIComponent(q.trim())}`) }
 
   return (

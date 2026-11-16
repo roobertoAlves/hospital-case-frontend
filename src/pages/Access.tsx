@@ -112,7 +112,7 @@ export function ChangePassword() {
   const { user, refresh } = useSession()
   const navigate = useNavigate()
   const notify = useNotice()
-  const [f, setF] = useState({ senha_atual: '', nova_senha: '', confirmar_nova_senha: '' })
+  const [f, setF] = useState({ current_password: '', new_password: '', confirm_password: '' })
   const [error, setError] = useState('')
   const [sending, setSending] = useState(false)
   if (!user) return <Navigate to="/login" replace />
@@ -122,7 +122,7 @@ export function ChangePassword() {
     setError('')
     setSending(true)
     try {
-      const r = await post('trocar-senha', f)
+      const r = await post('api/auth/change-password', f)
       await refresh()
       notify(r.message ?? 'Senha alterada.')
       navigate('/', { replace: true })
@@ -132,18 +132,18 @@ export function ChangePassword() {
       setSending(false)
     }
   }
-  const field = (nome: keyof typeof f, label: string, ac: string) => (
-    <Field label={label} name={nome}>
-      <Input name={nome} type="password" autoComplete={ac} value={f[nome]} onChange={(e) => setF({ ...f, [nome]: e.target.value })} required />
+  const field = (name: keyof typeof f, label: string, ac: string) => (
+    <Field label={label} name={name}>
+      <Input name={name} type="password" autoComplete={ac} value={f[name]} onChange={(e) => setF({ ...f, [name]: e.target.value })} required />
     </Field>
   )
   return (
     <PublicScreen title="Trocar senha" subtitle={user.primeiro_acesso ? 'Primeiro acesso: defina uma senha só sua antes de continuar.' : 'A nova senha vale a partir do próximo login.'}>
       <form onSubmit={submit} className="flex flex-col gap-4" noValidate>
         {error && <Alert tone="erro">{error}</Alert>}
-        {field('senha_atual', user.primeiro_acesso ? 'Senha temporária (do e-mail)' : 'Senha atual', 'current-password')}
-        {field('nova_senha', 'Nova senha', 'new-password')}
-        {field('confirmar_nova_senha', 'Confirme a nova senha', 'new-password')}
+        {field('current_password', user.primeiro_acesso ? 'Senha temporária (do e-mail)' : 'Senha atual', 'current-password')}
+        {field('new_password', 'Nova senha', 'new-password')}
+        {field('confirm_password', 'Confirme a nova senha', 'new-password')}
         <p className="text-[12px] text-faint">Mínimo de 8 caracteres, com letras e números.</p>
         <Button type="submit" variant="primario" loading={sending} className="h-11">Salvar nova senha</Button>
         {!user.primeiro_acesso && <Link to="/" className="text-center text-[13px] text-brand-700 hover:underline">Voltar ao início</Link>}
@@ -161,7 +161,7 @@ export function ForgotPassword() {
     <PublicScreen title="Recuperar senha" subtitle="Enviamos um link de uso único para o e-mail cadastrado.">
       <form className="flex flex-col gap-4" noValidate onSubmit={async (e) => {
         e.preventDefault(); setError(''); setSending(true)
-        try { const r = await post('recuperar-senha', { email: email.trim() }); setMsg(r.message ?? 'Se o e-mail estiver cadastrado, você receberá o link.') }
+        try { const r = await post('api/auth/forgot-password', { email: email.trim() }); setMsg(r.message ?? 'Se o e-mail estiver cadastrado, você receberá o link.') }
         catch (err) { setError(err instanceof ApiError ? err.message : 'Não foi possível enviar.') }
         finally { setSending(false) }
       }}>
@@ -179,7 +179,7 @@ export function ResetPassword() {
   const [params] = useSearchParams()
   const navigate = useNavigate()
   const notify = useNotice()
-  const [f, setF] = useState({ nova_senha: '', confirmar_nova_senha: '' })
+  const [f, setF] = useState({ new_password: '', confirm_password: '' })
   const [error, setError] = useState('')
   const [sending, setSending] = useState(false)
   const token = params.get('token') ?? ''
@@ -187,14 +187,14 @@ export function ResetPassword() {
     <PublicScreen title="Nova senha" subtitle="Defina a nova senha. O link vale uma vez só.">
       <form className="flex flex-col gap-4" noValidate onSubmit={async (e) => {
         e.preventDefault(); setError(''); setSending(true)
-        try { const r = await post('redefinir-senha', { token, ...f }); notify(r.message ?? 'Senha redefinida.'); navigate('/login') }
+        try { const r = await post('api/auth/reset-password', { token, ...f }); notify(r.message ?? 'Senha redefinida.'); navigate('/login') }
         catch (err) { setError(err instanceof ApiError ? err.message : 'Não foi possível redefinir.') }
         finally { setSending(false) }
       }}>
         {!token && <Alert tone="erro">Link sem token. Peça um novo em “Esqueci minha senha”.</Alert>}
         {error && <Alert tone="erro">{error}</Alert>}
-        <Field label="Nova senha" name="nova_senha"><Input name="nova_senha" type="password" autoComplete="new-password" value={f.nova_senha} onChange={(e) => setF({ ...f, nova_senha: e.target.value })} /></Field>
-        <Field label="Confirme a nova senha" name="confirmar_nova_senha"><Input name="confirmar_nova_senha" type="password" autoComplete="new-password" value={f.confirmar_nova_senha} onChange={(e) => setF({ ...f, confirmar_nova_senha: e.target.value })} /></Field>
+        <Field label="Nova senha" name="new_password"><Input name="new_password" type="password" autoComplete="new-password" value={f.new_password} onChange={(e) => setF({ ...f, new_password: e.target.value })} /></Field>
+        <Field label="Confirme a nova senha" name="confirm_password"><Input name="confirm_password" type="password" autoComplete="new-password" value={f.confirm_password} onChange={(e) => setF({ ...f, confirm_password: e.target.value })} /></Field>
         <Button type="submit" variant="primario" loading={sending} disabled={!token} className="h-11">Redefinir senha</Button>
       </form>
     </PublicScreen>

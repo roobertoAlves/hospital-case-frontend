@@ -16,7 +16,7 @@ export default function Exams() {
   const notify = useNotice()
   const [params, setParams] = useSearchParams()
   const day = params.get('data') ?? todayIso()
-  const { data, loading, error, reload } = useApi<{ date: string; exams: Row[]; locations: Row[] }>('api/exames', { data: day })
+  const { data, loading, error, reload } = useApi<{ date: string; exams: Row[]; locations: Row[] }>('api/exams', { date: day })
   const [cancel, setCancelling] = useState<Row | null>(null)
   const canChange = can('exames.agendar')
 
@@ -57,8 +57,8 @@ export default function Exams() {
                           <Td><Badge tone={tone}>{label}</Badge></Td>
                           <Td className="text-right whitespace-nowrap">
                             {canChange && x.status === 'agendado' && <>
-                              <Button small onClick={() => action(`api/exames-agendados/${id}/situacao`, { situacao: 'realizado' })}>Realizado</Button>
-                              <Button small variant="texto" onClick={() => action(`api/exames-agendados/${id}/situacao`, { situacao: 'ausente' })}>Faltou</Button>
+                              <Button small onClick={() => action(`api/exams/${id}/status`, { status: 'realizado' })}>Realizado</Button>
+                              <Button small variant="texto" onClick={() => action(`api/exams/${id}/status`, { status: 'ausente' })}>Faltou</Button>
                               <Button small variant="perigoTexto" onClick={() => setCancelling(x)}>Cancelar</Button>
                             </>}
                           </Td>
@@ -78,7 +78,7 @@ export default function Exams() {
         help="O motivo fica registrado. O paciente recebe um aviso por e-mail, sem o nome do exame."
         buttonLabel="Confirmar cancelamento"
         onClose={() => setCancelling(null)}
-        onConfirm={async (reason) => { await action(`api/exames-agendados/${cancel!.id_exame_agendado}/cancelar`, { reason }); setCancelling(null) }}
+        onConfirm={async (reason) => { await action(`api/exams/${cancel!.id_exame_agendado}/cancel`, { reason }); setCancelling(null) }}
       />
     </>
   )

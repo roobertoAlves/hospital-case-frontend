@@ -40,7 +40,7 @@ export default function Catalog() {
   const [category, setCategory] = useState('')
   const navigate = useNavigate()
   const { user } = useSession()
-  const { data, loading, error } = useApi<Catalog>('api/publico/catalogo')
+  const { data, loading, error } = useApi<Catalog>('api/public/catalog')
   const target = user ? `/minha-saude/${tab}` : '/login'
   const filter = (...t: unknown[]) => !q.trim() || t.some((x) => without(String(x ?? '')).includes(without(q.trim())))
   const changeTab = (a: Tab) => { setCategory(''); navigate(`/servicos/${a}`) }
@@ -75,13 +75,13 @@ export default function Catalog() {
         <>
           {tab === 'consultas' && (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {data.specialties.filter((e) => filter(e.nome, ...(e.medicos as Row[]).map((m) => m.nome))).map((e, i) => (
+              {data.specialties.filter((e) => filter(e.nome, ...(e.doctors as Row[]).map((m) => m.nome))).map((e, i) => (
                 <motion.div key={String(e.id_especialidade)} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: Math.min(i, 12) * 0.03 }}
                   className="flex flex-col rounded-[var(--radius-card)] border border-line p-5">
                   <p className="text-[18px] font-semibold">{String(e.nome)}</p>
                   {e.descricao ? <p className="mt-1 text-[14px] text-muted">{String(e.descricao)}</p> : null}
                   <ul className="mt-4 grow space-y-2">
-                    {(e.medicos as Row[]).map((m) => (
+                    {(e.doctors as Row[]).map((m) => (
                       <li key={String(m.id_profissional)} className="flex flex-wrap items-center gap-x-2.5 text-[14px]">
                         <Stethoscope className="size-4 text-brand-600" />{String(m.nome)} <span className="text-[12px] text-faint">CRM {String(m.crm)}/{String(m.crm_uf)}</span>
                       </li>
