@@ -7,9 +7,9 @@ import type { Tone } from '../lib/format'
 const cx = (...c: (string | false | null | undefined)[]) => c.filter(Boolean).join(' ')
 export { cx }
 
-/* ------------------------------------------------------------------ animacao de entrada */
+/* ------------------------------------------------------------------ entrance animation */
 
-/** Entrada suave (sobe e aparece), como os cards do prompt de referencia, mas curta para uso diario. */
+/** Soft entrance (rises and fades in), short enough for daily use. */
 export function FadeIn({ children, delay = 0, className }: { children: ReactNode; delay?: number; className?: string }) {
   return (
     <motion.div
@@ -23,7 +23,7 @@ export function FadeIn({ children, delay = 0, className }: { children: ReactNode
   )
 }
 
-/* ------------------------------------------------------------------ botoes */
+/* ------------------------------------------------------------------ buttons */
 
 type Variant = 'primario' | 'secundario' | 'texto' | 'perigo' | 'perigoTexto'
 const VAR: Record<Variant, string> = {
@@ -78,7 +78,7 @@ export function ButtonLink({ to, variant = 'secundario', small, icon: Icon, chil
   )
 }
 
-/* ------------------------------------------------------------------ cabecalho da pagina */
+/* ------------------------------------------------------------------ page header */
 
 export function PageHeader({ title, subtitle, actions, breadcrumb }: {
   title: ReactNode; subtitle?: ReactNode; actions?: ReactNode; breadcrumb?: { label: string; to?: string }[]
@@ -106,7 +106,7 @@ export function PageHeader({ title, subtitle, actions, breadcrumb }: {
   )
 }
 
-/* ------------------------------------------------------------------ paineis */
+/* ------------------------------------------------------------------ panels */
 
 export function Panel({ title, meta, actions, children, className, delay = 0.05, noPadding }: {
   title?: ReactNode; meta?: ReactNode; actions?: ReactNode; children: ReactNode; className?: string; delay?: number; noPadding?: boolean
@@ -134,7 +134,7 @@ export function Kpi({ label, value, note, highlight, delay = 0 }: { label: strin
   )
 }
 
-/* ------------------------------------------------------------------ pilulas */
+/* ------------------------------------------------------------------ badges */
 
 const TONE: Record<Tone, string> = {
   neutral: 'bg-[#ebeeed] text-[#353a39]',
@@ -157,7 +157,7 @@ export function Priority({ color, name }: { color?: unknown; name?: unknown }) {
   )
 }
 
-/* ------------------------------------------------------------------ formulario */
+/* ------------------------------------------------------------------ forms */
 
 export function Field({ label, name, required, help, error, children, className }: {
   label: ReactNode; name?: string; required?: boolean; help?: ReactNode; error?: string; children: ReactNode; className?: string
@@ -186,7 +186,7 @@ export function TextArea({ invalid, className, ...r }: TextareaHTMLAttributes<HT
   return <textarea {...r} id={r.id ?? r.name} aria-invalid={invalid || undefined} className={cx('field-input', className)} />
 }
 
-/** Bloco de formulario em duas colunas (titulo + explicacao | campos), como no backend. */
+/** Two-column form block (title + explanation | fields). */
 export function FormSection({ title, description, children }: { title: string; description?: ReactNode; children: ReactNode }) {
   return (
     <section className="grid gap-5 border-b border-rule py-6 first:pt-0 last:border-0 md:grid-cols-[260px_1fr]">
@@ -199,7 +199,7 @@ export function FormSection({ title, description, children }: { title: string; d
   )
 }
 
-/* ------------------------------------------------------------------ estados */
+/* ------------------------------------------------------------------ states */
 
 export function Empty({ children, icon: Icon }: { children: ReactNode; icon?: ComponentType<{ className?: string }> }) {
   return (
@@ -223,7 +223,7 @@ export function Alert({ tone = 'nota', children }: { tone?: 'nota' | 'erro' | 'o
   return <div className={cx('rounded-[var(--radius-card)] border px-4 py-3 text-[13px]', c)} role={tone === 'erro' ? 'alert' : 'status'}>{children}</div>
 }
 
-/* ------------------------------------------------------------------ tabela */
+/* ------------------------------------------------------------------ table */
 
 export function Table({ header, children }: { header: ReactNode; children: ReactNode }) {
   return (
@@ -250,7 +250,7 @@ export function Main({ children, sub }: { children: ReactNode; sub?: ReactNode }
   )
 }
 
-/* ------------------------------------------------------------------ abas */
+/* ------------------------------------------------------------------ tabs */
 
 export function Tabs<T extends string>({ tabs, current, onChange }: { tabs: { id: T; label: string }[]; current: T; onChange: (id: T) => void }) {
   return (

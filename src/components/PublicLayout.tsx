@@ -11,7 +11,7 @@ const LINKS = [
   { to: '/servicos/vacinas', rotulo: 'Vacinas' },
 ]
 
-/** Site publico (sem login): barra superior no estilo nav.dasa, conteudo e rodape. */
+/** Public site (no login): nav.dasa-style top bar, content and footer. */
 export function PublicLayout({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false)
   const link = ({ isActive }: { isActive: boolean }) => cx('rounded-full px-4 py-2 text-[15px] font-medium transition-colors', isActive ? 'bg-brand-50 text-brand-900' : 'text-muted hover:text-ink')

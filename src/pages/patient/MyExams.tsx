@@ -19,7 +19,7 @@ export default function MyExams() {
   const { data, loading, error, reload } = useApi<Data>('api/portal/exams')
   const [mark, setMark] = useState(false)
   const [type, setType] = useState('')
-  const [origin, setOrigin] = useState('')           // "s:ID" (solicitacao) | "p:ID" (pedido) | "novo"
+  const [origin, setOrigin] = useState('')           // "s:ID" (doctor's request) | "p:ID" (attached order) | "new" (new attachment)
   const [file, setFile] = useState<File | null>(null)
   const [day, setDay] = useState('')
   const [slots, setSlots] = useState<Slot[] | null>(null)
@@ -42,13 +42,13 @@ export default function MyExams() {
   const t = data.types.find((x) => String(x.id_tipo_exame) === type)
   const requires = String(t?.exige_pedido) === '1'
   const validOrders = data.medical_orders.filter((p) => p.status !== 'recusado')
-  const ready = !!type && !!h && (!requires || (origin && (origin !== 'novo' || file)))
+  const ready = !!type && !!h && (!requires || (origin && (origin !== 'new' || file)))
 
   const confirm = async () => {
     setSending(true)
     try {
       let orderId = origin.startsWith('p:') ? origin.slice(2) : ''
-      if (requires && origin === 'novo' && file) {
+      if (requires && origin === 'new' && file) {
         if (file.size > 5 * 1024 * 1024) { notify('Arquivo maior que 5 MB.', false); return }
         const env = await post<{ id_pedido: number }>('api/portal/medical-orders', { file_name: file.name, content: await readFile(file), id_tipo_exame: type })
         orderId = String(env.data.id_pedido)
@@ -99,11 +99,11 @@ export default function MyExams() {
                     <Badge tone={ORDER[String(p.status)][0]}>{ORDER[String(p.status)][1]}</Badge>
                   </label>
                 ))}
-                <label className={cx('flex cursor-pointer items-center gap-3 rounded-[var(--radius-card)] border border-dashed p-3', origin === 'novo' ? 'border-ink' : 'border-control')}>
-                  <input type="radio" name="origem" className="accent-ink" checked={origin === 'novo'} onChange={() => { setOrigin('novo'); input.current?.click() }} />
+                <label className={cx('flex cursor-pointer items-center gap-3 rounded-[var(--radius-card)] border border-dashed p-3', origin === 'new' ? 'border-ink' : 'border-control')}>
+                  <input type="radio" name="origem" className="accent-ink" checked={origin === 'new'} onChange={() => { setOrigin('new'); input.current?.click() }} />
                   <FileUp className="size-4 text-brand-700" />
                   <span className="grow">{file ? <><strong>{file.name}</strong> <span className="text-[12px] text-muted">({Math.ceil(file.size / 1024)} KB)</span></> : 'Anexar pedido agora (PDF, JPG ou PNG, até 5 MB)'}</span>
-                  <input ref={input} type="file" accept="application/pdf,image/jpeg,image/png" className="sr-only" onChange={(e) => { setFile(e.target.files?.[0] ?? null); setOrigin('novo') }} />
+                  <input ref={input} type="file" accept="application/pdf,image/jpeg,image/png" className="sr-only" onChange={(e) => { setFile(e.target.files?.[0] ?? null); setOrigin('new') }} />
                 </label>
               </fieldset>
             )}

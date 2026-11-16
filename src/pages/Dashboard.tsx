@@ -56,7 +56,7 @@ export default function Dashboard() {
   if (loading && !data) return <Loading />
   if (error) return <Empty>{error.message}</Empty>
   const p = data!
-  const shortcuts = visibleItems(SHORTCUTS, user?.permissions ?? [])
+  const shortcuts = visibleItems(SHORTCUTS, user?.permissions ?? [], user?.groups ?? [])
 
   return (
     <>

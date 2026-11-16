@@ -11,7 +11,7 @@ interface Data {
 
 const n = (v: unknown) => (v == null ? '—' : String(v).replace(/\.0+$/, '').replace('.', ','))
 
-/** Historico filtrado por perfil (decidido no backend: HistoricoController.nivel). */
+/** History filtered by role (decided by the backend: PatientHistoryController.level). */
 export default function PatientHistory() {
   const { id } = useParams()
   const { data, loading, error } = useApi<Data>(`api/patients/${id}/history`)

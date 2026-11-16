@@ -1,6 +1,6 @@
 /**
- * Marca Asklep: o bastao de Asclepio (Asklepios, deus grego da medicina) com uma unica
- * serpente enrolada - o simbolo classico da medicina, diferente do caduceu (duas serpentes e asas).
+ * Asklep mark: the Rod of Asclepius (Asklepios, the Greek god of medicine) with a single
+ * coiled serpent - the classic symbol of medicine, unlike the caduceus (two serpents and wings).
  */
 export function LogoMark({ className = 'size-8' }: { className?: string }) {
   return (

@@ -3,7 +3,7 @@ import { CheckCircle2, X, XCircle } from 'lucide-react'
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
 import { TextArea, Button, Field } from './ui'
 
-/* ------------------------------------------------------------------ avisos (toast) */
+/* ------------------------------------------------------------------ notices (toast) */
 
 interface Notice { id: number; text: string; ok: boolean }
 const NoticeContext = createContext<(text: string, ok?: boolean) => void>(() => undefined)
@@ -46,7 +46,7 @@ export function NoticesProvider({ children }: { children: ReactNode }) {
 
 export const useNotice = () => useContext(NoticeContext)
 
-/* ------------------------------------------------------------------ dialogo */
+/* ------------------------------------------------------------------ dialog */
 
 export function Dialog({ open, onClose, title, children, width = 'max-w-md' }: {
   open: boolean; onClose: () => void; title: string; children: ReactNode; width?: string
@@ -77,7 +77,7 @@ export function Dialog({ open, onClose, title, children, width = 'max-w-md' }: {
   )
 }
 
-/** Pede um motivo (cancelamentos, retificacoes). Resolve com o texto ou null se fechou. */
+/** Asks for a reason (cancellations, amendments). Resolves with the text, or null when closed. */
 export function ReasonDialog({ open, title, help, buttonLabel = 'Confirmar', onConfirm, onClose }: {
   open: boolean; title: string; help?: string; buttonLabel?: string; onConfirm: (reason: string) => Promise<void> | void; onClose: () => void
 }) {

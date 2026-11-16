@@ -1,11 +1,11 @@
 /**
- * Cliente da API do backend (hospital-case-backend).
+ * Client for the backend API (hospital-case-backend).
  *
- * - Em desenvolvimento a base e "/hospital-case-backend" e o Vite repassa para o Tomcat
- *   (mesma origem: o cookie de sessao vai sozinho). VITE_API_BASE troca a base no build.
- * - Toda requisicao que altera dados leva o token CSRF no cabecalho X-CSRF-Token; o token vem
- *   de GET /api/sessao e e renovado depois do login.
- * - Respostas seguem o JsonResponse do backend: { status, code, message, data } ou
+ * - In development the base is "/hospital-case-backend" and Vite proxies it to Tomcat (same origin:
+ *   the session cookie is sent automatically). VITE_API_BASE changes the base for a build.
+ * - Every state-changing request carries the CSRF token in the X-CSRF-Token header; the token comes
+ *   from GET /api/auth/session and is renewed after login.
+ * - Responses follow the backend JsonResponse: { status, code, message, data } or
  *   { status: false, error, message, details }.
  */
 export const API_BASE: string = import.meta.env.VITE_API_BASE ?? '/hospital-case-backend'
@@ -38,13 +38,13 @@ export function setCsrf(token: string) {
 
 type Listener = (e: ApiError) => void
 const listeners = new Set<Listener>()
-/** Avisa a aplicacao de 401 (sessao expirou) e de troca de senha obrigatoria. */
+/** Tells the app about a 401 (expired session) and about a mandatory password change. */
 export function onSessionError(fn: Listener) {
   listeners.add(fn)
   return () => { listeners.delete(fn) }
 }
 
-/** Numeros soltos viram texto: o backend le os campos como texto (como num formulario). */
+/** Plain numbers become text: the backend reads fields as text (like a form). */
 function normalize(body: Record<string, unknown>): Record<string, unknown> {
   const out: Record<string, unknown> = {}
   for (const [k, v] of Object.entries(body)) {
@@ -95,7 +95,7 @@ export function get<T>(path: string, params?: Record<string, string | number | b
   return request<T>('GET', q ? `${path}?${q}` : path)
 }
 
-/** Baixa um arquivo protegido (com o cookie da sessao) e abre numa aba nova. */
+/** Downloads a protected file (with the session cookie) and opens it in a new tab. */
 export async function openFile(path: string) {
   const r = await fetch(`${API_BASE}/${path.replace(/^\/+/, '')}`, { credentials: 'include' })
   if (!r.ok) throw new ApiError(r.status, 'ERR_ARQUIVO', 'Não foi possível abrir o arquivo.')
@@ -104,7 +104,7 @@ export async function openFile(path: string) {
   setTimeout(() => URL.revokeObjectURL(url), 60_000)
 }
 
-/** Le um arquivo escolhido pelo usuario como data URI (para enviar em JSON). */
+/** Reads a file chosen by the user as a data URI (to send in JSON). */
 export function readFile(f: File): Promise<string> {
   return new Promise((ok, error) => {
     const reader = new FileReader()

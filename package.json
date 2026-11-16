@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "Asklep - frontend React do sistema de gestao clinica (API: hospital-case-backend)",
+  "description": "Asklep - React frontend of the clinic management system (API: hospital-case-backend)",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",

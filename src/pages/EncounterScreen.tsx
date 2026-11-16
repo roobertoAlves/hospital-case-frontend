@@ -123,11 +123,11 @@ export default function EncounterScreen() {
                 </ul>
               )}
               {(inEncounter || finished) && (
-                <form className="mt-4" onSubmit={(e) => { e.preventDefault(); call('evol', `api/encounters/${id}/progress-notes`, { tipo: finished ? 'adendo' : 'evolucao', texto: text }, () => setText('')) }}>
+                <form className="mt-4" onSubmit={(e) => { e.preventDefault(); call('note', `api/encounters/${id}/progress-notes`, { tipo: finished ? 'adendo' : 'evolucao', texto: text }, () => setText('')) }}>
                   <Field label={finished ? 'Novo adendo' : 'Nova evolução'} name="texto" error={errors.texto}>
                     <TextArea name="texto" rows={2} value={text} onChange={(e) => setText(e.target.value)} />
                   </Field>
-                  <div className="mt-3 flex justify-end"><Button type="submit" loading={busy === 'evol'}>{finished ? 'Incluir adendo' : 'Incluir evolução'}</Button></div>
+                  <div className="mt-3 flex justify-end"><Button type="submit" loading={busy === 'note'}>{finished ? 'Incluir adendo' : 'Incluir evolução'}</Button></div>
                 </form>
               )}
             </Panel>
@@ -194,11 +194,11 @@ export default function EncounterScreen() {
             </ul>
             {canPrescribe && (
               <form className="grid gap-3 rounded-[var(--radius-card)] bg-raised p-4 sm:grid-cols-6" noValidate
-                onSubmit={(ev) => { ev.preventDefault(); call('exame', `api/encounters/${id}/exam-requests`, exam, () => setExam({ nome_exame: '', codigo: '', justificativa: '' })) }}>
+                onSubmit={(ev) => { ev.preventDefault(); call('exam', `api/encounters/${id}/exam-requests`, exam, () => setExam({ nome_exame: '', codigo: '', justificativa: '' })) }}>
                 <Field label="Exame" name="nome_exame" required error={errors.nome_exame} className="sm:col-span-4"><Input name="nome_exame" maxLength={200} value={exam.nome_exame} onChange={(e) => setExam({ ...exam, nome_exame: e.target.value })} /></Field>
                 <Field label="Código" name="codigo" help="Opcional (ex.: TUSS)" className="sm:col-span-2"><Input name="codigo" maxLength={20} value={exam.codigo} onChange={(e) => setExam({ ...exam, codigo: e.target.value })} /></Field>
                 <Field label="Justificativa" name="justificativa" className="sm:col-span-6"><Input name="justificativa" maxLength={500} value={exam.justificativa} onChange={(e) => setExam({ ...exam, justificativa: e.target.value })} /></Field>
-                <div className="flex justify-end sm:col-span-6"><Button type="submit" loading={busy === 'exame'}>Solicitar exame</Button></div>
+                <div className="flex justify-end sm:col-span-6"><Button type="submit" loading={busy === 'exam'}>Solicitar exame</Button></div>
               </form>
             )}
           </Panel>
@@ -265,7 +265,7 @@ export default function EncounterScreen() {
         </div>
       </Dialog>
       <ReasonDialog open={!!cancel} title={cancel?.title ?? ''} help={cancel?.help} buttonLabel="Confirmar cancelamento"
-        onClose={() => setCancelling(null)} onConfirm={async (reason) => { await call('cancelar', cancel!.url, { reason }); setCancelling(null) }} />
+        onClose={() => setCancelling(null)} onConfirm={async (reason) => { await call('cancel', cancel!.url, { reason }); setCancelling(null) }} />
     </>
   )
 }

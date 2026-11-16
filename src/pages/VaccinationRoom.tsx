@@ -15,7 +15,7 @@ const STATUS: Record<string, ['neutral' | 'positive' | 'negative', string]> = {
   agendada: ['neutral', 'Agendada'], aplicada: ['positive', 'Aplicada'], cancelada: ['negative', 'Cancelada'], ausente: ['neutral', 'Faltou'],
 }
 
-/** Sala de vacinacao: agenda do dia, aplicacao (enfermagem) e agendamento pela recepcao. */
+/** Vaccination room: the day's schedule, administration (nursing) and booking by the reception. */
 export default function VaccinationRoom() {
   const { can } = useSession()
   const notify = useNotice()

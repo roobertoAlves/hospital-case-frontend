@@ -7,7 +7,7 @@ import { useApi } from '../lib/useApi'
 
 type Row = Record<string, unknown>
 
-/** Receita para impressao (fora do layout): o medico autor ou, no portal, o proprio paciente (o backend devolve 404 para os outros). */
+/** Printable prescription (outside the layout): the issuing doctor or, in the portal, the patient (the backend answers 404 to anyone else). */
 export default function PrescriptionPrint({ portal = false }: { portal?: boolean }) {
   const { id } = useParams()
   const navigate = useNavigate()

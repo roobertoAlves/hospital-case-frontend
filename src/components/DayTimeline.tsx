@@ -9,7 +9,7 @@ const STATUS_COLOR: Record<string, string> = {
   aguardando_triagem: 'bg-[#ffe3a6]', em_triagem: 'bg-[#ffe3a6]', aguardando_atendimento: 'bg-brand-200', em_atendimento: 'bg-brand-500',
 }
 
-/** Linha do dia: uma faixa por medico (7h-19h) com as consultas posicionadas pelo horario. */
+/** Day timeline: one lane per doctor (7am-7pm) with the appointments placed by time. */
 export function DayTimeline({ doctors, appointments, showNow = true }: { doctors: Row[]; appointments: Row[]; showNow?: boolean }) {
   const start = 7 * 60, end = 19 * 60
   const pos = (min: number) => `${((min - start) / (end - start)) * 100}%`

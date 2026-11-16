@@ -9,7 +9,7 @@ import { useApi } from '../../lib/useApi'
 
 type Row = Record<string, unknown>
 
-/** Escolhe especialidade, medico, data e horario (marcar ou remarcar). */
+/** Picks specialty, doctor, date and time (book or reschedule). */
 function Scheduler({ specialties, today, fixed, onConfirm, buttonLabel }: {
   specialties: Row[]; today: string; fixed?: { specialty: string; doctor: string }; onConfirm: (v: { specialty: string; doctor: string; date: string; time: string }) => Promise<void>; buttonLabel: string
 }) {
@@ -119,7 +119,7 @@ export default function MyAppointments() {
         {previous.length === 0 ? <p className="text-muted">Nada por aqui ainda.</p> : (
           <ul className="divide-y divide-rule">
             {previous.map((c) => {
-              // Remarcada: a consulta original fica cancelada no banco, mas para o paciente ela "mudou de horario".
+              // Rescheduled: the original appointment is cancelled in the database, but for the patient it "moved".
               const rescheduled = !!c.remarcada_para
               const [label, tone] = rescheduled ? ['Remarcada', 'accent' as const] : appointmentStatus(c.status)
               const reason = String(c.motivo_cancelamento ?? '').replace(/^Remarcada para [^·]*·?\s*/, '')

@@ -11,7 +11,7 @@ import { cx } from './ui'
 function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const { user, logout } = useSession()
   const navigate = useNavigate()
-  const items = visibleItems(MENU, user?.permissions ?? [])
+  const items = visibleItems(MENU, user?.permissions ?? [], user?.groups ?? [])
   const sections: [string, typeof items][] = []
   for (const i of items) {
     const s = sections.find(([n]) => n === i.section)

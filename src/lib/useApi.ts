@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { ApiError, get } from './api'
 
-/** Carrega uma leitura da API e recarrega quando a chave (caminho + parametros) muda. */
+/** Loads an API read and reloads it when the key (path + parameters) changes. */
 export function useApi<T>(path: string | null, params?: Record<string, string | number | boolean | null | undefined>) {
   const [data, setData] = useState<T | null>(null)
   const [error, setError] = useState<ApiError | null>(null)

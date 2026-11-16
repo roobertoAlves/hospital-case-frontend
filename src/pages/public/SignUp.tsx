@@ -10,7 +10,7 @@ import { PublicScreen } from '../Access'
 
 const EMPTY = { nome: '', cpf: '', data_nascimento: '', email: '', telefone: '', password: '', confirm_password: '', accept_terms: '' }
 
-/** Cadastro do paciente pelo portal. CPF ja cadastrado na clinica: codigo no e-mail da ficha. */
+/** Patient sign-up in the portal. A CPF already registered at the clinic gets a code at the record's e-mail. */
 export default function SignUp() {
   const { login } = useSession()
   const navigate = useNavigate()

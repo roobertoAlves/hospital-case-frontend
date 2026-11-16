@@ -4,8 +4,8 @@ import { useNotice } from '../components/notices'
 import { ApiError, post } from './api'
 
 /**
- * Estado de formulario + envio para a API. Erros de validacao (422) vem por campo em
- * "details" e aparecem embaixo de cada campo; o servidor e quem decide o que e valido.
+ * Form state + submission to the API. Validation errors (422) come per field in "details" and are
+ * shown under each field; the server decides what is valid.
  */
 export function useForm<T extends Record<string, unknown>>(initial: T) {
   const [values, setValues] = useState<T>(initial)
