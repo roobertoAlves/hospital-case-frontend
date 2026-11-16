@@ -1,124 +1,132 @@
 import { lazy, Suspense, type ReactNode } from 'react'
 import { createBrowserRouter, Navigate, RouterProvider, useLocation } from 'react-router'
 import { Layout } from './components/Layout'
-import { LayoutPaciente } from './components/LayoutPaciente'
-import { LayoutPublico } from './components/LayoutPublico'
-import { Carregando, Vazio } from './components/ui'
-import { useSessao, type Usuario } from './lib/sessao'
-import { Login, RecuperarSenha, RedefinirSenha, TrocarSenha } from './pages/Acesso'
+import { PatientLayout } from './components/PatientLayout'
+import { PublicLayout } from './components/PublicLayout'
+import { Loading, Empty } from './components/ui'
+import { homeFor } from './lib/menu'
+import { useSession, type User } from './lib/session'
+import { Login, ForgotPassword, ResetPassword, ChangePassword } from './pages/Access'
 
-const Painel = lazy(() => import('./pages/Painel'))
-const Pacientes = lazy(() => import('./pages/Pacientes'))
-const PacienteFicha = lazy(() => import('./pages/PacienteFicha'))
-const PacienteForm = lazy(() => import('./pages/PacienteForm'))
-const Historico = lazy(() => import('./pages/Historico'))
-const Agenda = lazy(() => import('./pages/Agenda'))
-const AgendaForm = lazy(() => import('./pages/AgendaForm'))
-const Exames = lazy(() => import('./pages/Exames'))
-const ExameForm = lazy(() => import('./pages/ExameForm'))
-const Triagem = lazy(() => import('./pages/Triagem'))
-const TriagemForm = lazy(() => import('./pages/TriagemForm'))
-const Atendimento = lazy(() => import('./pages/Atendimento'))
-const AtendimentoTela = lazy(() => import('./pages/AtendimentoTela'))
-const Receita = lazy(() => import('./pages/Receita'))
-const Profissionais = lazy(() => import('./pages/Profissionais'))
-const ProfissionalForm = lazy(() => import('./pages/ProfissionalForm'))
-const Especialidades = lazy(() => import('./pages/Especialidades'))
-const Auditoria = lazy(() => import('./pages/Auditoria'))
+const Dashboard = lazy(() => import('./pages/Dashboard'))
+const Patients = lazy(() => import('./pages/Patients'))
+const PatientRecord = lazy(() => import('./pages/PatientRecord'))
+const PatientForm = lazy(() => import('./pages/PatientForm'))
+const PatientHistory = lazy(() => import('./pages/PatientHistory'))
+const Appointments = lazy(() => import('./pages/Appointments'))
+const AppointmentForm = lazy(() => import('./pages/AppointmentForm'))
+const Exams = lazy(() => import('./pages/Exams'))
+const ExamForm = lazy(() => import('./pages/ExamForm'))
+const TriageQueue = lazy(() => import('./pages/TriageQueue'))
+const TriageForm = lazy(() => import('./pages/TriageForm'))
+const EncounterQueue = lazy(() => import('./pages/EncounterQueue'))
+const EncounterScreen = lazy(() => import('./pages/EncounterScreen'))
+const PrescriptionPrint = lazy(() => import('./pages/PrescriptionPrint'))
+const Professionals = lazy(() => import('./pages/Professionals'))
+const ProfessionalForm = lazy(() => import('./pages/ProfessionalForm'))
+const Specialties = lazy(() => import('./pages/Specialties'))
+const AuditLog = lazy(() => import('./pages/AuditLog'))
 const Admin = lazy(() => import('./pages/Admin'))
-const Pedidos = lazy(() => import('./pages/Pedidos'))
-const SalaVacinas = lazy(() => import('./pages/SalaVacinas'))
-// Site publico e portal do paciente
-const Inicio = lazy(() => import('./pages/publico/Inicio'))
-const Catalogo = lazy(() => import('./pages/publico/Catalogo'))
-const Cadastro = lazy(() => import('./pages/publico/Cadastro'))
-const MinhaSaude = lazy(() => import('./pages/paciente/MinhaSaude'))
-const MinhasConsultas = lazy(() => import('./pages/paciente/MinhasConsultas'))
-const MeusExames = lazy(() => import('./pages/paciente/MeusExames'))
-const MinhasVacinas = lazy(() => import('./pages/paciente/MinhasVacinas'))
-const MinhasReceitas = lazy(() => import('./pages/paciente/MinhasReceitas'))
+const MedicalOrders = lazy(() => import('./pages/MedicalOrders'))
+const VaccinationRoom = lazy(() => import('./pages/VaccinationRoom'))
+// Framework example screens (support tickets, profile and files, manager's team overview)
+const Tickets = lazy(() => import('./pages/Tickets'))
+const Profile = lazy(() => import('./pages/Profile'))
+const Team = lazy(() => import('./pages/Team'))
+// Public site and patient portal
+const Home = lazy(() => import('./pages/public/Home'))
+const Catalog = lazy(() => import('./pages/public/Catalog'))
+const SignUp = lazy(() => import('./pages/public/SignUp'))
+const MyHealth = lazy(() => import('./pages/patient/MyHealth'))
+const MyAppointments = lazy(() => import('./pages/patient/MyAppointments'))
+const MyExams = lazy(() => import('./pages/patient/MyExams'))
+const MyVaccines = lazy(() => import('./pages/patient/MyVaccines'))
+const MyPrescriptions = lazy(() => import('./pages/patient/MyPrescriptions'))
 
-export const ehPaciente = (u: Usuario | null) => !!u && u.grupos.includes('paciente')
+export const isPatient = (u: User | null) => !!u && u.groups.includes('paciente')
 
-/** Equipe: logado, sem senha temporaria pendente e nao paciente (o backend tambem bloqueia). */
-function Protegida({ children }: { children: ReactNode }) {
-  const { carregando, usuario } = useSessao()
+/** Staff: signed in, no pending temporary password and not a patient (the backend also blocks it). */
+function Protected({ children }: { children: ReactNode }) {
+  const { loading, user } = useSession()
   const local = useLocation()
-  if (carregando) return <div className="p-8"><Carregando /></div>
-  if (!usuario) return <Navigate to="/login" replace state={{ de: local.pathname }} />
-  if (usuario.primeiro_acesso) return <Navigate to="/trocar-senha" replace />
-  if (ehPaciente(usuario)) return <Navigate to="/minha-saude" replace />
+  if (loading) return <div className="p-8"><Loading /></div>
+  if (!user) return <Navigate to="/login" replace state={{ de: local.pathname }} />
+  if (user.primeiro_acesso) return <Navigate to="/trocar-senha" replace />
+  if (isPatient(user)) return <Navigate to="/minha-saude" replace />
   return <>{children}</>
 }
 
-function SoPaciente({ children }: { children: ReactNode }) {
-  const { carregando, usuario } = useSessao()
-  if (carregando) return <div className="p-8"><Carregando /></div>
-  if (!usuario) return <Navigate to="/login" replace />
-  if (!ehPaciente(usuario)) return <Navigate to="/painel" replace />
+function PatientOnly({ children }: { children: ReactNode }) {
+  const { loading, user } = useSession()
+  if (loading) return <div className="p-8"><Loading /></div>
+  if (!user) return <Navigate to="/login" replace />
+  if (!isPatient(user)) return <Navigate to={homeFor(user.groups)} replace />
   return <>{children}</>
 }
 
-/** "/" : visitante ve o site; paciente vai para Minha saude; equipe para o painel. */
-function Raiz() {
-  const { carregando, usuario } = useSessao()
-  if (carregando) return <div className="p-8"><Carregando /></div>
-  if (!usuario) return <LayoutPublico><Suspense fallback={<Carregando />}><Inicio /></Suspense></LayoutPublico>
-  return <Navigate to={ehPaciente(usuario) ? '/minha-saude' : '/painel'} replace />
+/** "/": visitors see the site; patients go to My health; staff go to the dashboard. */
+function Root() {
+  const { loading, user } = useSession()
+  if (loading) return <div className="p-8"><Loading /></div>
+  if (!user) return <PublicLayout><Suspense fallback={<Loading />}><Home /></Suspense></PublicLayout>
+  return <Navigate to={isPatient(user) ? '/minha-saude' : homeFor(user.groups)} replace />
 }
 
-const pagina = (el: ReactNode) => <Suspense fallback={<Carregando />}>{el}</Suspense>
+const page = (el: ReactNode) => <Suspense fallback={<Loading />}>{el}</Suspense>
 
 const router = createBrowserRouter([
-  { path: '/', element: <Raiz /> },
-  { path: '/servicos/:aba', element: <LayoutPublico>{pagina(<Catalogo />)}</LayoutPublico> },
-  { path: '/cadastro', element: pagina(<Cadastro />) },
+  { path: '/', element: <Root /> },
+  { path: '/servicos/:aba', element: <PublicLayout>{page(<Catalog />)}</PublicLayout> },
+  { path: '/cadastro', element: page(<SignUp />) },
   { path: '/login', element: <Login /> },
-  { path: '/recuperar-senha', element: <RecuperarSenha /> },
-  { path: '/redefinir-senha', element: <RedefinirSenha /> },
-  { path: '/trocar-senha', element: <TrocarSenha /> },
+  { path: '/recuperar-senha', element: <ForgotPassword /> },
+  { path: '/redefinir-senha', element: <ResetPassword /> },
+  { path: '/trocar-senha', element: <ChangePassword /> },
   {
     path: '/minha-saude',
-    element: <SoPaciente><LayoutPaciente /></SoPaciente>,
+    element: <PatientOnly><PatientLayout /></PatientOnly>,
     children: [
-      { index: true, element: pagina(<MinhaSaude />) },
-      { path: 'consultas', element: pagina(<MinhasConsultas />) },
-      { path: 'exames', element: pagina(<MeusExames />) },
-      { path: 'vacinas', element: pagina(<MinhasVacinas />) },
-      { path: 'receitas', element: pagina(<MinhasReceitas />) },
+      { index: true, element: page(<MyHealth />) },
+      { path: 'consultas', element: page(<MyAppointments />) },
+      { path: 'exames', element: page(<MyExams />) },
+      { path: 'vacinas', element: page(<MyVaccines />) },
+      { path: 'receitas', element: page(<MyPrescriptions />) },
     ],
   },
-  { path: '/minha-saude/receitas/:id', element: <SoPaciente>{pagina(<Receita portal />)}</SoPaciente> },
+  { path: '/minha-saude/receitas/:id', element: <PatientOnly>{page(<PrescriptionPrint portal />)}</PatientOnly> },
   {
-    element: <Protegida><Layout /></Protegida>,
+    element: <Protected><Layout /></Protected>,
     children: [
-      { path: 'painel', element: pagina(<Painel />) },
-      { path: 'pacientes', element: pagina(<Pacientes />) },
-      { path: 'pacientes/novo', element: pagina(<PacienteForm />) },
-      { path: 'pacientes/:id', element: pagina(<PacienteFicha />) },
-      { path: 'pacientes/:id/editar', element: pagina(<PacienteForm />) },
-      { path: 'pacientes/:id/historico', element: pagina(<Historico />) },
-      { path: 'agenda', element: pagina(<Agenda />) },
-      { path: 'agenda/nova', element: pagina(<AgendaForm />) },
-      { path: 'agenda/:id/remarcar', element: pagina(<AgendaForm />) },
-      { path: 'exames', element: pagina(<Exames />) },
-      { path: 'exames/novo', element: pagina(<ExameForm />) },
-      { path: 'pedidos', element: pagina(<Pedidos />) },
-      { path: 'vacinas', element: pagina(<SalaVacinas />) },
-      { path: 'triagem', element: pagina(<Triagem />) },
-      { path: 'triagem/:id', element: pagina(<TriagemForm />) },
-      { path: 'atendimento', element: pagina(<Atendimento />) },
-      { path: 'atendimento/:id', element: pagina(<AtendimentoTela />) },
-      { path: 'profissionais', element: pagina(<Profissionais />) },
-      { path: 'profissionais/novo', element: pagina(<ProfissionalForm />) },
-      { path: 'profissionais/:id', element: pagina(<ProfissionalForm />) },
-      { path: 'especialidades', element: pagina(<Especialidades />) },
-      { path: 'auditoria', element: pagina(<Auditoria />) },
-      { path: 'admin', element: pagina(<Admin />) },
-      { path: '*', element: <Vazio>Página não encontrada.</Vazio> },
+      { path: 'painel', element: page(<Dashboard />) },
+      { path: 'pacientes', element: page(<Patients />) },
+      { path: 'pacientes/novo', element: page(<PatientForm />) },
+      { path: 'pacientes/:id', element: page(<PatientRecord />) },
+      { path: 'pacientes/:id/editar', element: page(<PatientForm />) },
+      { path: 'pacientes/:id/historico', element: page(<PatientHistory />) },
+      { path: 'agenda', element: page(<Appointments />) },
+      { path: 'agenda/nova', element: page(<AppointmentForm />) },
+      { path: 'agenda/:id/remarcar', element: page(<AppointmentForm />) },
+      { path: 'exames', element: page(<Exams />) },
+      { path: 'exames/novo', element: page(<ExamForm />) },
+      { path: 'pedidos', element: page(<MedicalOrders />) },
+      { path: 'vacinas', element: page(<VaccinationRoom />) },
+      { path: 'triagem', element: page(<TriageQueue />) },
+      { path: 'triagem/:id', element: page(<TriageForm />) },
+      { path: 'atendimento', element: page(<EncounterQueue />) },
+      { path: 'atendimento/:id', element: page(<EncounterScreen />) },
+      { path: 'profissionais', element: page(<Professionals />) },
+      { path: 'profissionais/novo', element: page(<ProfessionalForm />) },
+      { path: 'profissionais/:id', element: page(<ProfessionalForm />) },
+      { path: 'especialidades', element: page(<Specialties />) },
+      { path: 'auditoria', element: page(<AuditLog />) },
+      { path: 'admin', element: page(<Admin />) },
+      { path: 'chamados', element: page(<Tickets />) },
+      { path: 'perfil', element: page(<Profile />) },
+      { path: 'equipe', element: page(<Team />) },
+      { path: '*', element: <Empty>Página não encontrada.</Empty> },
     ],
   },
-  { path: '/receitas/:id', element: <Protegida>{pagina(<Receita />)}</Protegida> },
+  { path: '/receitas/:id', element: <Protected>{page(<PrescriptionPrint />)}</Protected> },
 ])
 
 export default function App() {

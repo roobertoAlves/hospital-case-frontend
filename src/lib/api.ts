@@ -1,11 +1,11 @@
 /**
- * Cliente da API do backend (hospital-case-backend).
+ * Client for the backend API (hospital-case-backend).
  *
- * - Em desenvolvimento a base e "/hospital-case-backend" e o Vite repassa para o Tomcat
- *   (mesma origem: o cookie de sessao vai sozinho). VITE_API_BASE troca a base no build.
- * - Toda requisicao que altera dados leva o token CSRF no cabecalho X-CSRF-Token; o token vem
- *   de GET /api/sessao e e renovado depois do login.
- * - Respostas seguem o JsonResponse do backend: { status, code, message, data } ou
+ * - In development the base is "/hospital-case-backend" and Vite proxies it to Tomcat (same origin:
+ *   the session cookie is sent automatically). VITE_API_BASE changes the base for a build.
+ * - Every state-changing request carries the CSRF token in the X-CSRF-Token header; the token comes
+ *   from GET /api/auth/session and is renewed after login.
+ * - Responses follow the backend JsonResponse: { status, code, message, data } or
  *   { status: false, error, message, details }.
  */
 export const API_BASE: string = import.meta.env.VITE_API_BASE ?? '/hospital-case-backend'
@@ -26,46 +26,46 @@ export class ApiError extends Error {
   }
 }
 
-export interface Resposta<T> {
+export interface ApiResponse<T> {
   data: T
   message: string | null
 }
 
 let csrf = ''
-export function definirCsrf(token: string) {
+export function setCsrf(token: string) {
   csrf = token
 }
 
-type Ouvinte = (e: ApiError) => void
-const ouvintes = new Set<Ouvinte>()
-/** Avisa a aplicacao de 401 (sessao expirou) e de troca de senha obrigatoria. */
-export function aoErroDeSessao(fn: Ouvinte) {
-  ouvintes.add(fn)
-  return () => { ouvintes.delete(fn) }
+type Listener = (e: ApiError) => void
+const listeners = new Set<Listener>()
+/** Tells the app about a 401 (expired session) and about a mandatory password change. */
+export function onSessionError(fn: Listener) {
+  listeners.add(fn)
+  return () => { listeners.delete(fn) }
 }
 
-/** Numeros soltos viram texto: o backend le os campos como texto (como num formulario). */
-function normalizar(corpo: Record<string, unknown>): Record<string, unknown> {
+/** Plain numbers become text: the backend reads fields as text (like a form). */
+function normalize(body: Record<string, unknown>): Record<string, unknown> {
   const out: Record<string, unknown> = {}
-  for (const [k, v] of Object.entries(corpo)) {
+  for (const [k, v] of Object.entries(body)) {
     out[k] = typeof v === 'number' || typeof v === 'boolean' ? String(v) : v
   }
   return out
 }
 
-async function requisicao<T>(metodo: 'GET' | 'POST', caminho: string, corpo?: Record<string, unknown>): Promise<Resposta<T>> {
+async function request<T>(method: 'GET' | 'POST', path: string, body?: Record<string, unknown>): Promise<ApiResponse<T>> {
   const headers: Record<string, string> = { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
-  if (metodo === 'POST') {
+  if (method === 'POST') {
     headers['Content-Type'] = 'application/json; charset=utf-8'
     headers['X-CSRF-Token'] = csrf
   }
   let r: Response
   try {
-    r = await fetch(`${API_BASE}/${caminho.replace(/^\/+/, '')}`, {
-      method: metodo,
+    r = await fetch(`${API_BASE}/${path.replace(/^\/+/, '')}`, {
+      method: method,
       headers,
       credentials: 'include',
-      body: metodo === 'POST' ? JSON.stringify(normalizar(corpo ?? {})) : undefined,
+      body: method === 'POST' ? JSON.stringify(normalize(body ?? {})) : undefined,
     })
   } catch {
     throw new ApiError(0, 'ERR_REDE', 'Sem conexão com o servidor. Confira se o backend está no ar.')
@@ -77,43 +77,43 @@ async function requisicao<T>(metodo: 'GET' | 'POST', caminho: string, corpo?: Re
     throw new ApiError(r.status, 'ERR_RESPOSTA', `Resposta inesperada do servidor (HTTP ${r.status}).`)
   }
   if (!r.ok || json.status === false) {
-    const erro = new ApiError(r.status, json.error ?? 'ERR', json.message ?? 'Não foi possível concluir.', json.details)
-    if (r.status === 401 || erro.code === 'ERR_PASSWORD_CHANGE_REQUIRED') {
-      ouvintes.forEach((fn) => fn(erro))
+    const error = new ApiError(r.status, json.error ?? 'ERR', json.message ?? 'Não foi possível concluir.', json.details)
+    if (r.status === 401 || error.code === 'ERR_PASSWORD_CHANGE_REQUIRED') {
+      listeners.forEach((fn) => fn(error))
     }
-    throw erro
+    throw error
   }
   return { data: json.data as T, message: json.message ?? null }
 }
 
-export function get<T>(caminho: string, params?: Record<string, string | number | boolean | null | undefined>) {
+export function get<T>(path: string, params?: Record<string, string | number | boolean | null | undefined>) {
   const qs = new URLSearchParams()
   for (const [k, v] of Object.entries(params ?? {})) {
     if (v !== undefined && v !== null && v !== '' && v !== false) qs.set(k, String(v))
   }
   const q = qs.toString()
-  return requisicao<T>('GET', q ? `${caminho}?${q}` : caminho)
+  return request<T>('GET', q ? `${path}?${q}` : path)
 }
 
-/** Baixa um arquivo protegido (com o cookie da sessao) e abre numa aba nova. */
-export async function abrirArquivo(caminho: string) {
-  const r = await fetch(`${API_BASE}/${caminho.replace(/^\/+/, '')}`, { credentials: 'include' })
+/** Downloads a protected file (with the session cookie) and opens it in a new tab. */
+export async function openFile(path: string) {
+  const r = await fetch(`${API_BASE}/${path.replace(/^\/+/, '')}`, { credentials: 'include' })
   if (!r.ok) throw new ApiError(r.status, 'ERR_ARQUIVO', 'Não foi possível abrir o arquivo.')
   const url = URL.createObjectURL(await r.blob())
   window.open(url, '_blank', 'noopener')
   setTimeout(() => URL.revokeObjectURL(url), 60_000)
 }
 
-/** Le um arquivo escolhido pelo usuario como data URI (para enviar em JSON). */
-export function lerArquivo(f: File): Promise<string> {
-  return new Promise((ok, erro) => {
-    const leitor = new FileReader()
-    leitor.onload = () => ok(String(leitor.result))
-    leitor.onerror = () => erro(leitor.error)
-    leitor.readAsDataURL(f)
+/** Reads a file chosen by the user as a data URI (to send in JSON). */
+export function readFile(f: File): Promise<string> {
+  return new Promise((ok, error) => {
+    const reader = new FileReader()
+    reader.onload = () => ok(String(reader.result))
+    reader.onerror = () => error(reader.error)
+    reader.readAsDataURL(f)
   })
 }
 
-export function post<T = unknown>(caminho: string, corpo?: Record<string, unknown>) {
-  return requisicao<T>('POST', caminho, corpo)
+export function post<T = unknown>(path: string, body?: Record<string, unknown>) {
+  return request<T>('POST', path, body)
 }
