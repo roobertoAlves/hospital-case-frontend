@@ -26,46 +26,46 @@ export class ApiError extends Error {
   }
 }
 
-export interface Resposta<T> {
+export interface ApiResponse<T> {
   data: T
   message: string | null
 }
 
 let csrf = ''
-export function definirCsrf(token: string) {
+export function setCsrf(token: string) {
   csrf = token
 }
 
-type Ouvinte = (e: ApiError) => void
-const ouvintes = new Set<Ouvinte>()
+type Listener = (e: ApiError) => void
+const listeners = new Set<Listener>()
 /** Avisa a aplicacao de 401 (sessao expirou) e de troca de senha obrigatoria. */
-export function aoErroDeSessao(fn: Ouvinte) {
-  ouvintes.add(fn)
-  return () => { ouvintes.delete(fn) }
+export function onSessionError(fn: Listener) {
+  listeners.add(fn)
+  return () => { listeners.delete(fn) }
 }
 
 /** Numeros soltos viram texto: o backend le os campos como texto (como num formulario). */
-function normalizar(corpo: Record<string, unknown>): Record<string, unknown> {
+function normalize(body: Record<string, unknown>): Record<string, unknown> {
   const out: Record<string, unknown> = {}
-  for (const [k, v] of Object.entries(corpo)) {
+  for (const [k, v] of Object.entries(body)) {
     out[k] = typeof v === 'number' || typeof v === 'boolean' ? String(v) : v
   }
   return out
 }
 
-async function requisicao<T>(metodo: 'GET' | 'POST', caminho: string, corpo?: Record<string, unknown>): Promise<Resposta<T>> {
+async function request<T>(method: 'GET' | 'POST', path: string, body?: Record<string, unknown>): Promise<ApiResponse<T>> {
   const headers: Record<string, string> = { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
-  if (metodo === 'POST') {
+  if (method === 'POST') {
     headers['Content-Type'] = 'application/json; charset=utf-8'
     headers['X-CSRF-Token'] = csrf
   }
   let r: Response
   try {
-    r = await fetch(`${API_BASE}/${caminho.replace(/^\/+/, '')}`, {
-      method: metodo,
+    r = await fetch(`${API_BASE}/${path.replace(/^\/+/, '')}`, {
+      method: method,
       headers,
       credentials: 'include',
-      body: metodo === 'POST' ? JSON.stringify(normalizar(corpo ?? {})) : undefined,
+      body: method === 'POST' ? JSON.stringify(normalize(body ?? {})) : undefined,
     })
   } catch {
     throw new ApiError(0, 'ERR_REDE', 'Sem conexão com o servidor. Confira se o backend está no ar.')
@@ -77,27 +77,27 @@ async function requisicao<T>(metodo: 'GET' | 'POST', caminho: string, corpo?: Re
     throw new ApiError(r.status, 'ERR_RESPOSTA', `Resposta inesperada do servidor (HTTP ${r.status}).`)
   }
   if (!r.ok || json.status === false) {
-    const erro = new ApiError(r.status, json.error ?? 'ERR', json.message ?? 'Não foi possível concluir.', json.details)
-    if (r.status === 401 || erro.code === 'ERR_PASSWORD_CHANGE_REQUIRED') {
-      ouvintes.forEach((fn) => fn(erro))
+    const error = new ApiError(r.status, json.error ?? 'ERR', json.message ?? 'Não foi possível concluir.', json.details)
+    if (r.status === 401 || error.code === 'ERR_PASSWORD_CHANGE_REQUIRED') {
+      listeners.forEach((fn) => fn(error))
     }
-    throw erro
+    throw error
   }
   return { data: json.data as T, message: json.message ?? null }
 }
 
-export function get<T>(caminho: string, params?: Record<string, string | number | boolean | null | undefined>) {
+export function get<T>(path: string, params?: Record<string, string | number | boolean | null | undefined>) {
   const qs = new URLSearchParams()
   for (const [k, v] of Object.entries(params ?? {})) {
     if (v !== undefined && v !== null && v !== '' && v !== false) qs.set(k, String(v))
   }
   const q = qs.toString()
-  return requisicao<T>('GET', q ? `${caminho}?${q}` : caminho)
+  return request<T>('GET', q ? `${path}?${q}` : path)
 }
 
 /** Baixa um arquivo protegido (com o cookie da sessao) e abre numa aba nova. */
-export async function abrirArquivo(caminho: string) {
-  const r = await fetch(`${API_BASE}/${caminho.replace(/^\/+/, '')}`, { credentials: 'include' })
+export async function openFile(path: string) {
+  const r = await fetch(`${API_BASE}/${path.replace(/^\/+/, '')}`, { credentials: 'include' })
   if (!r.ok) throw new ApiError(r.status, 'ERR_ARQUIVO', 'Não foi possível abrir o arquivo.')
   const url = URL.createObjectURL(await r.blob())
   window.open(url, '_blank', 'noopener')
@@ -105,15 +105,15 @@ export async function abrirArquivo(caminho: string) {
 }
 
 /** Le um arquivo escolhido pelo usuario como data URI (para enviar em JSON). */
-export function lerArquivo(f: File): Promise<string> {
-  return new Promise((ok, erro) => {
-    const leitor = new FileReader()
-    leitor.onload = () => ok(String(leitor.result))
-    leitor.onerror = () => erro(leitor.error)
-    leitor.readAsDataURL(f)
+export function readFile(f: File): Promise<string> {
+  return new Promise((ok, error) => {
+    const reader = new FileReader()
+    reader.onload = () => ok(String(reader.result))
+    reader.onerror = () => error(reader.error)
+    reader.readAsDataURL(f)
   })
 }
 
-export function post<T = unknown>(caminho: string, corpo?: Record<string, unknown>) {
-  return requisicao<T>('POST', caminho, corpo)
+export function post<T = unknown>(path: string, body?: Record<string, unknown>) {
+  return request<T>('POST', path, body)
 }

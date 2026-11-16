@@ -2,7 +2,7 @@
  * Marca Asklep: o bastao de Asclepio (Asklepios, deus grego da medicina) com uma unica
  * serpente enrolada - o simbolo classico da medicina, diferente do caduceu (duas serpentes e asas).
  */
-export function LogoMarca({ className = 'size-8' }: { className?: string }) {
+export function LogoMark({ className = 'size-8' }: { className?: string }) {
   return (
     <svg viewBox="0 0 32 32" className={className} aria-hidden="true">
       <rect width="32" height="32" rx="9" className="fill-brand-600" />
@@ -16,13 +16,13 @@ export function LogoMarca({ className = 'size-8' }: { className?: string }) {
   )
 }
 
-export function Logo({ subtitulo = true }: { subtitulo?: boolean }) {
+export function Logo({ subtitle = true }: { subtitle?: boolean }) {
   return (
     <span className="flex items-center gap-2.5">
-      <LogoMarca />
+      <LogoMark />
       <span className="leading-tight">
         <span className="block text-[17px] font-semibold tracking-tight text-brand-700">Asklep</span>
-        {subtitulo && <span className="block text-[11px] text-faint">Gestão clínica e hospitalar</span>}
+        {subtitle && <span className="block text-[11px] text-faint">Gestão clínica e hospitalar</span>}
       </span>
     </span>
   )
