@@ -1,0 +1,15 @@
+node_modules/
+dist/
+*.tsbuildinfo
+.env.local
+.env.*.local
+.vite/
+npm-debug.log*
+
+# Ferramentas locais
+.idea/
+.vscode/
+.claude/
+.claude-mem/
+CLAUDE.md
+.taste-skill/

@@ -1,0 +1,70 @@
+@import "@fontsource/ibm-plex-sans/400.css";
+@import "@fontsource/ibm-plex-sans/500.css";
+@import "@fontsource/ibm-plex-sans/600.css";
+@import "tailwindcss";
+
+/*
+  Asklep - tokens de design. Mesmo desenho das telas do backend (inspirado no nav.dasa):
+  moldura tingida, folha branca, texto quase preto, acento verde-azulado do bastao de Asclepio.
+*/
+@theme {
+  --font-sans: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+
+  --color-frame: #edf3f2;
+  --color-surface: #ffffff;
+  --color-raised: #f4f7f6;
+  --color-active: #e0eae8;
+  --color-line: #e2e8e6;
+  --color-rule: #eef2f1;
+  --color-control: #c7cfcd;
+  --color-ink: #121615;
+  --color-muted: #535b59;
+  --color-faint: #6b7371;
+
+  --color-brand-50: #e8f5f2;
+  --color-brand-100: #cdeae4;
+  --color-brand-200: #9fd5ca;
+  --color-brand-500: #129383;
+  --color-brand-600: #0e7c70;
+  --color-brand-700: #0b6359;
+  --color-brand-900: #063a34;
+
+  --color-positive: #1e7b4f;
+  --color-negative: #c4242a;
+  --color-warning: #92400e;
+
+  --radius-sheet: 18px;
+  --radius-card: 12px;
+  --radius-control: 8px;
+
+  --shadow-card: 0 1px 2px rgb(18 22 21 / 0.04), 0 4px 16px rgb(18 22 21 / 0.05);
+}
+
+@layer base {
+  html { -webkit-text-size-adjust: 100%; }
+  body { @apply bg-frame text-ink font-sans antialiased; font-size: 14px; }
+  :focus-visible { outline: 2px solid var(--color-brand-600); outline-offset: 2px; }
+  ::selection { background: var(--color-brand-100); }
+  h1, h2, h3 { letter-spacing: -0.01em; }
+  input, select, textarea, button { font: inherit; color: inherit; }
+}
+
+@layer components {
+  .num { font-variant-numeric: tabular-nums; }
+  .field-input {
+    @apply w-full h-10 rounded-[var(--radius-control)] border border-control bg-surface px-3 text-[14px]
+      outline-none transition-colors placeholder:text-faint focus:border-brand-600 focus:ring-2 focus:ring-brand-100
+      disabled:bg-raised disabled:text-faint;
+  }
+  textarea.field-input { @apply h-auto min-h-24 py-2 leading-relaxed; }
+  .field-input[aria-invalid="true"] { @apply border-negative focus:ring-red-100; }
+}
+
+@media print {
+  .no-print { display: none !important; }
+  body { background: #fff; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 1ms !important; transition-duration: 1ms !important; }
+}
