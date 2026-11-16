@@ -7,11 +7,11 @@ import { useApi } from '../lib/useApi'
 
 type Linha = Record<string, unknown>
 
-/** Receita para impressao (fora do layout): so o medico autor abre (o backend devolve 404 para os outros). */
-export default function Receita() {
+/** Receita para impressao (fora do layout): o medico autor ou, no portal, o proprio paciente (o backend devolve 404 para os outros). */
+export default function Receita({ portal = false }: { portal?: boolean }) {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { dados, carregando, erro } = useApi<{ receita: Linha }>(`api/receitas/${id}`)
+  const { dados, carregando, erro } = useApi<{ receita: Linha }>(portal ? `api/portal/receitas/${id}` : `api/receitas/${id}`)
   if (carregando && !dados) return <div className="p-8"><Carregando /></div>
   if (erro || !dados) return <div className="p-8"><Vazio>{erro?.message ?? 'Receita não encontrada.'}</Vazio></div>
   const r = dados.receita

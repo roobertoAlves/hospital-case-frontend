@@ -95,6 +95,25 @@ export function get<T>(caminho: string, params?: Record<string, string | number 
   return requisicao<T>('GET', q ? `${caminho}?${q}` : caminho)
 }
 
+/** Baixa um arquivo protegido (com o cookie da sessao) e abre numa aba nova. */
+export async function abrirArquivo(caminho: string) {
+  const r = await fetch(`${API_BASE}/${caminho.replace(/^\/+/, '')}`, { credentials: 'include' })
+  if (!r.ok) throw new ApiError(r.status, 'ERR_ARQUIVO', 'Não foi possível abrir o arquivo.')
+  const url = URL.createObjectURL(await r.blob())
+  window.open(url, '_blank', 'noopener')
+  setTimeout(() => URL.revokeObjectURL(url), 60_000)
+}
+
+/** Le um arquivo escolhido pelo usuario como data URI (para enviar em JSON). */
+export function lerArquivo(f: File): Promise<string> {
+  return new Promise((ok, erro) => {
+    const leitor = new FileReader()
+    leitor.onload = () => ok(String(leitor.result))
+    leitor.onerror = () => erro(leitor.error)
+    leitor.readAsDataURL(f)
+  })
+}
+
 export function post<T = unknown>(caminho: string, corpo?: Record<string, unknown>) {
   return requisicao<T>('POST', caminho, corpo)
 }

@@ -43,9 +43,20 @@ Usuários de demonstração (dados fictícios):
 | Enfermagem | `enfermeiro@hospital.local` | `enfermeiro123` |
 | Médico | `medico@hospital.local` | `medico123` |
 | Administrador | `admin@hospital.local` | `admin123` |
+| Paciente (portal) | `paciente@hospital.local` | `paciente123` |
 
 > **Se um arquivo novo aparecer sem estilo** durante o `npm run dev`, pare e rode `npm run dev` de novo.
 > O Tailwind só vê as classes de arquivos criados depois que o servidor subiu quando ele reinicia.
+
+## As três áreas
+
+| Endereço | Quem usa | O que tem |
+|---|---|---|
+| `/`, `/servicos/...`, `/cadastro` | Qualquer pessoa, sem login | Site público: consultas (especialidades e médicos), exames (preparo, exige pedido ou não), vacinas e cadastro |
+| `/minha-saude/...` | Paciente | Marcar, confirmar, remarcar e cancelar consultas; exames com pedido anexado; vacinas e cartão; receitas |
+| `/painel` e demais telas | Equipe (recepção, enfermagem, médico, administrador) | As telas internas, incluindo **Pedidos médicos** (conferência) e **Sala de vacinação** |
+
+Depois do login, cada pessoa vai para a sua área. O paciente nunca vê as telas da equipe, e a equipe (inclusive o administrador) não entra no portal de um paciente. O backend também bloqueia esses acessos.
 
 ## Outros comandos
 
