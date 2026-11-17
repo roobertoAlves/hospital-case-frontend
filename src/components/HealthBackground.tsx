@@ -51,6 +51,27 @@ export function HealthBackgroundView({ background }: { background: Row | null })
   )
 }
 
+/** Compact background for side panels: the items a doctor scans before the visit. */
+export function HealthBackgroundSummary({ background }: { background: Row | null }) {
+  if (!background) return <p className="text-muted">Antecedentes ainda não registrados.</p>
+  const b = background
+  const habits = [SMOKING[String(b.tabagismo)], ALCOHOL[String(b.etilismo)] && `Álcool: ${ALCOHOL[String(b.etilismo)].toLowerCase()}`,
+    ACTIVITY[String(b.atividade_fisica)]].filter(Boolean).join(' · ')
+  const line = (label: string, value: unknown) => value ? (
+    <div className="py-1.5"><dt className="text-[12px] text-muted">{label}</dt><dd className="whitespace-pre-wrap">{String(value)}</dd></div>
+  ) : null
+  return (
+    <dl className="divide-y divide-rule text-[13px]">
+      {line('Doenças pré-existentes', b.doencas_preexistentes)}
+      {line('Medicamentos de uso contínuo', b.medicamentos_uso_continuo)}
+      {line('Cirurgias', b.cirurgias)}
+      {line('Internações', b.internacoes)}
+      {line('Hábitos', habits)}
+      {line('História familiar', b.historia_familiar)}
+    </dl>
+  )
+}
+
 /** Editable health background, saved through the encounter (doctor with a care link). */
 export function HealthBackgroundForm({ encounterId, background, onSaved }: { encounterId: string; background: Row | null; onSaved: () => void }) {
   const notify = useNotice()

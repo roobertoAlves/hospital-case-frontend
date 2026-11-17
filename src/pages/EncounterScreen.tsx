@@ -1,32 +1,49 @@
-import { FileText, Plus, Printer, Trash2 } from 'lucide-react'
+import { FileText, Pencil, Plus, Printer, Trash2 } from 'lucide-react'
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useParams } from 'react-router'
 import { Dialog, ReasonDialog, useNotice } from '../components/notices'
-import { Alert, TextArea, Button, ButtonLink, PageHeader, Field, Loading, Input, Panel, Badge, Priority, Select, Empty } from '../components/ui'
+import { Alert, TextArea, Button, ButtonLink, PageHeader, Field, Loading, Input, Panel, Badge, Priority, Select, Empty, Tabs } from '../components/ui'
 import { ApiError, post } from '../lib/api'
 import { formatDate, formatDateTime, formatTime, age, appointmentStatus } from '../lib/format'
 import { useApi } from '../lib/useApi'
-import { HealthBackgroundForm, HealthBackgroundView } from '../components/HealthBackground'
+import { HealthBackgroundForm, HealthBackgroundSummary } from '../components/HealthBackground'
 
 type Row = Record<string, unknown>
 interface Data { appointment: Row; triage: Row | null; allergies: Row[]; background: Row | null; progress_notes: Row[]; versions: number; prescriptions: Row[]; exam_requests: Row[]; previous_records: Row[] }
 
-/** Record sections in the order of the CFM model: [field, label, help, rows (0 = single line), section]. */
-const MEDICAL_RECORD: [string, string, string | null, number, string][] = [
-  ['queixa_principal', 'Queixa principal (QP)', 'Nas palavras do paciente.', 2, 'Anamnese'],
-  ['historia_doenca_atual', 'História da doença atual (HDA)', 'Início, intensidade, frequência, o que melhora ou piora, tratamentos já tentados.', 4, 'Anamnese'],
-  ['historico_relevante', 'Antecedentes relatados nesta consulta', 'O histórico fixo do paciente fica no quadro "Antecedentes e hábitos".', 2, 'Anamnese'],
-  ['revisao_sistemas', 'Revisão por sistemas', 'Respiratório, cardiovascular, digestivo, urinário, neurológico...', 3, 'Anamnese'],
-  ['exame_fisico', 'Exame físico', 'Achados do exame clínico. Os sinais vitais da triagem estão ao lado.', 4, 'Exame físico'],
-  ['observacoes', 'Outras observações', null, 2, 'Exame físico'],
-  ['hipoteses_diagnosticas', 'Hipóteses diagnósticas', null, 2, 'Diagnóstico'],
-  ['diagnostico', 'Diagnóstico', null, 2, 'Diagnóstico'],
-  ['cid10', 'CID-10', 'Ex.: J06.9', 0, 'Diagnóstico'],
-  ['conduta', 'Plano terapêutico e orientações', 'Obrigatório para finalizar. As prescrições ficam no quadro Receitas.', 3, 'Plano'],
-  ['encaminhamentos', 'Encaminhamentos', 'Especialidade e motivo.', 2, 'Plano'],
+type Section = 'anamnese' | 'exame' | 'diagnostico' | 'plano'
+const SECTIONS: { id: Section; label: string }[] = [
+  { id: 'anamnese', label: 'Anamnese' }, { id: 'exame', label: 'Exame físico' },
+  { id: 'diagnostico', label: 'Diagnóstico' }, { id: 'plano', label: 'Plano' },
 ]
-const EMPTY_ITEM = { medicamento: '', dosagem: '', via: '', frequencia: '', duracao: '', orientacoes: '' }
+
+/** Record fields in the order of the CFM model: [field, label, help, rows (0 = single line), section]. */
+const MEDICAL_RECORD: [string, string, string | null, number, Section][] = [
+  ['queixa_principal', 'Queixa principal (QP)', 'Nas palavras do paciente.', 2, 'anamnese'],
+  ['historia_doenca_atual', 'História da doença atual (HDA)', 'Início, intensidade, frequência, o que melhora ou piora, tratamentos já tentados.', 5, 'anamnese'],
+  ['historico_relevante', 'Antecedentes relatados nesta consulta', 'O histórico fixo do paciente fica no quadro "Antecedentes e hábitos".', 3, 'anamnese'],
+  ['revisao_sistemas', 'Revisão por sistemas', 'Respiratório, cardiovascular, digestivo, urinário, neurológico...', 3, 'anamnese'],
+  ['exame_fisico', 'Exame físico', 'Achados do exame clínico. Os sinais vitais da triagem estão no quadro Triagem.', 7, 'exame'],
+  ['observacoes', 'Outras observações', null, 3, 'exame'],
+  ['hipoteses_diagnosticas', 'Hipóteses diagnósticas', null, 3, 'diagnostico'],
+  ['diagnostico', 'Diagnóstico', null, 3, 'diagnostico'],
+  ['cid10', 'CID-10', 'Ex.: J06.9', 0, 'diagnostico'],
+  ['conduta', 'Plano terapêutico e orientações', 'Obrigatório para finalizar. Os medicamentos ficam no quadro Receitas.', 6, 'plano'],
+  ['encaminhamentos', 'Encaminhamentos', 'Especialidade e motivo.', 3, 'plano'],
+]
+
+/** Dose units: not every medicine is measured in mg (ointments, drops, syrups, inhalers...). */
+const UNITS = ['mg', 'g', 'mcg', 'mL', 'gota(s)', 'comprimido(s)', 'cápsula(s)', 'UI', 'jato(s)', 'sachê(s)', 'ampola(s)',
+  'adesivo(s)', 'cm (pomada)', 'aplicação(ões)', 'camada fina']
+const ROUTES = ['Oral', 'Sublingual', 'Tópica (pele)', 'Oftálmica', 'Otológica', 'Nasal', 'Inalatória', 'Retal', 'Vaginal',
+  'Intramuscular', 'Intravenosa', 'Subcutânea', 'Transdérmica']
+const FREQUENCIES = ['1x ao dia', '2x ao dia', '3x ao dia', 'De 4 em 4 horas', 'De 6 em 6 horas', 'De 8 em 8 horas', 'De 12 em 12 horas',
+  'Ao deitar', 'Em jejum', 'Se dor ou febre', 'Dose única']
+const EMPTY_ITEM = { medicamento: '', quantidade: '', unidade: 'mg', via: 'Oral', frequencia: '', duracao: '', orientacoes: '' }
+type Item = typeof EMPTY_ITEM
+const dose = (i: Item) => (i.unidade === 'camada fina' && !i.quantidade.trim() ? 'Camada fina' : `${i.quantidade.trim()} ${i.unidade}`.trim())
 const SEX: Record<string, string> = { feminino: 'Feminino', masculino: 'Masculino', outro: 'Outro' }
+const SEVERITY: Record<string, ['negative' | 'warning' | 'neutral', string]> = { grave: ['negative', 'Grave'], moderada: ['warning', 'Moderada'], leve: ['neutral', 'Leve'] }
 
 export default function EncounterScreen() {
   const { id } = useParams()
@@ -37,7 +54,10 @@ export default function EncounterScreen() {
   const [busy, setBusy] = useState('')
   const [confirmFinish, setConfirmFinish] = useState(false)
   const [text, setText] = useState('')
-  const [rx, setRx] = useState({ orientacoes_gerais: '', items: [{ ...EMPTY_ITEM }] })
+  const [rx, setRx] = useState<{ orientacoes_gerais: string; items: Item[] }>({ orientacoes_gerais: '', items: [{ ...EMPTY_ITEM }] })
+  const [section, setSection] = useState<Section>('anamnese')
+  const [allergyOpen, setAllergyOpen] = useState(false)
+  const [backgroundOpen, setBackgroundOpen] = useState(false)
   const [exam, setExam] = useState({ nome_exame: '', codigo: '', justificativa: '' })
   const [allergy, setAllergy] = useState({ substancia: '', reacao: '', gravidade: '' })
   const [cancel, setCancelling] = useState<{ url: string; title: string; help: string } | null>(null)
@@ -72,7 +92,10 @@ export default function EncounterScreen() {
   const save = (e: FormEvent) => { e.preventDefault(); call('salvar', `api/encounters/${id}/record`, record) }
   const issuePrescription = (e: FormEvent) => {
     e.preventDefault()
-    call('rx', `api/encounters/${id}/prescriptions`, { orientacoes_gerais: rx.orientacoes_gerais, items: rx.items.filter((i) => i.medicamento.trim()) },
+    const items = rx.items.filter((i) => i.medicamento.trim()).map((i) => ({
+      medicamento: i.medicamento, dosagem: dose(i), via: i.via, frequencia: i.frequencia, duracao: i.duracao, orientacoes: i.orientacoes,
+    }))
+    call('rx', `api/encounters/${id}/prescriptions`, { orientacoes_gerais: rx.orientacoes_gerais, items },
       () => setRx({ orientacoes_gerais: '', items: [{ ...EMPTY_ITEM }] }))
   }
 
@@ -100,22 +123,20 @@ export default function EncounterScreen() {
             : c.id_prontuario != null ? `rascunho · versão ${c.versao}${data.versions > 0 ? ` · ${data.versions} anteriores guardadas` : ''}` : 'inicie o atendimento para registrar'}>
             {c.id_prontuario == null ? <Empty>O prontuário é aberto quando você inicia o atendimento. A queixa da triagem já vem preenchida.</Empty> : (
               <form onSubmit={save} noValidate>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  {MEDICAL_RECORD.map(([k, label, help, rows, section], i) => (
-                    <div key={k} className="contents">
-                      {(i === 0 || MEDICAL_RECORD[i - 1][4] !== section) && (
-                        <h3 className="border-b border-line pb-1.5 text-[12px] font-medium tracking-wide text-muted uppercase sm:col-span-2">{section}</h3>
-                      )}
-                      <Field label={label} name={k} help={help ?? undefined} error={errors[k]} className={rows >= 3 ? 'sm:col-span-2' : ''}>
-                        {rows === 0
-                          ? <Input name={k} maxLength={10} value={record[k] ?? ''} disabled={!draft} invalid={!!errors[k]} onChange={(e) => setRecord({ ...record, [k]: e.target.value.toUpperCase() })} />
-                          : <TextArea name={k} rows={rows} value={record[k] ?? ''} disabled={!draft} invalid={!!errors[k]} onChange={(e) => setRecord({ ...record, [k]: e.target.value })} />}
-                      </Field>
-                    </div>
+                <Tabs tabs={SECTIONS.map((t) => ({ id: t.id, label: `${t.label}${MEDICAL_RECORD.some(([k, , , , sec]) => sec === t.id && record[k]?.trim()) ? ' ✓' : ''}` }))}
+                  current={section} onChange={setSection} />
+                <div className="mt-4 grid gap-4">
+                  {MEDICAL_RECORD.filter(([, , , , sec]) => sec === section).map(([k, label, help, rows]) => (
+                    <Field key={k} label={label} name={k} help={help ?? undefined} error={errors[k]} className={rows === 0 ? 'max-w-[180px]' : ''}>
+                      {rows === 0
+                        ? <Input name={k} maxLength={10} value={record[k] ?? ''} disabled={!draft} invalid={!!errors[k]} onChange={(e) => setRecord({ ...record, [k]: e.target.value.toUpperCase() })} />
+                        : <TextArea name={k} rows={rows} value={record[k] ?? ''} disabled={!draft} invalid={!!errors[k]} onChange={(e) => setRecord({ ...record, [k]: e.target.value })} />}
+                    </Field>
                   ))}
                 </div>
                 {draft && (
-                  <div className="mt-5 flex justify-end gap-2">
+                  <div className="mt-5 flex flex-wrap items-center justify-end gap-2 border-t border-line pt-4">
+                    <span className="mr-auto text-[12px] text-muted">O rascunho guarda todas as abas de uma vez.</span>
                     <Button type="submit" loading={busy === 'salvar'}>Salvar rascunho</Button>
                     <Button type="button" variant="primario" onClick={() => setConfirmFinish(true)}>Finalizar atendimento</Button>
                   </div>
@@ -171,18 +192,48 @@ export default function EncounterScreen() {
             {canPrescribe && (
               <form onSubmit={issuePrescription} className="rounded-[var(--radius-card)] bg-raised p-4" noValidate>
                 <p className="mb-3 font-medium">Nova receita</p>
-                <div className="space-y-2">
-                  {rx.items.map((it, k) => (
-                    <div key={k} className="grid gap-2 sm:grid-cols-[2fr_1fr_0.8fr_1.2fr_1fr_auto]">
-                      {(['medicamento', 'dosagem', 'via', 'frequencia', 'duracao'] as const).map((field) => (
-                        <Input key={field} aria-label={`${field} do item ${k + 1}`} value={it[field]}
-                          placeholder={{ medicamento: 'Medicamento', dosagem: '500 mg', via: 'oral', frequencia: '8 em 8 horas', duracao: '7 dias' }[field]}
-                          onChange={(e) => setRx({ ...rx, items: rx.items.map((x, j) => (j === k ? { ...x, [field]: e.target.value } : x)) })} />
-                      ))}
-                      <Button type="button" variant="perigoTexto" aria-label="Remover item" disabled={rx.items.length === 1}
-                        onClick={() => setRx({ ...rx, items: rx.items.filter((_, j) => j !== k) })}><Trash2 className="size-4" /></Button>
-                    </div>
-                  ))}
+                <datalist id="frequencias">{FREQUENCIES.map((f) => <option key={f} value={f} />)}</datalist>
+                <div className="space-y-3">
+                  {rx.items.map((it, k) => {
+                    const set = (field: keyof Item, value: string) => setRx({ ...rx, items: rx.items.map((x, j) => (j === k ? { ...x, [field]: value } : x)) })
+                    return (
+                      <div key={k} className="rounded-[var(--radius-card)] border border-line bg-surface p-3">
+                        <div className="mb-2 flex items-center justify-between">
+                          <span className="text-[12px] font-medium text-muted">Medicamento {k + 1}</span>
+                          <Button type="button" small variant="perigoTexto" aria-label="Remover item" disabled={rx.items.length === 1}
+                            onClick={() => setRx({ ...rx, items: rx.items.filter((_, j) => j !== k) })}><Trash2 className="size-4" /></Button>
+                        </div>
+                        <div className="grid gap-2 sm:grid-cols-6">
+                          <Field label="Medicamento e apresentação" name={`med${k}`} className="sm:col-span-6">
+                            <Input name={`med${k}`} maxLength={200} placeholder="Ex.: Amoxicilina 500 mg cápsula, Dexametasona creme 0,1%" value={it.medicamento} onChange={(e) => set('medicamento', e.target.value)} />
+                          </Field>
+                          <Field label="Quantidade" name={`qtd${k}`} className="sm:col-span-1">
+                            <Input name={`qtd${k}`} inputMode="decimal" maxLength={10} placeholder={it.unidade === 'camada fina' ? '—' : 'Ex.: 1'} value={it.quantidade}
+                              onChange={(e) => set('quantidade', e.target.value.replace(/[^\d.,/]/g, ''))} />
+                          </Field>
+                          <Field label="Unidade" name={`un${k}`} className="sm:col-span-2">
+                            <Select name={`un${k}`} value={it.unidade} onChange={(e) => set('unidade', e.target.value)}>
+                              {UNITS.map((u) => <option key={u} value={u}>{u}</option>)}
+                            </Select>
+                          </Field>
+                          <Field label="Via" name={`via${k}`} className="sm:col-span-3">
+                            <Select name={`via${k}`} value={it.via} onChange={(e) => set('via', e.target.value)}>
+                              {ROUTES.map((r) => <option key={r} value={r}>{r}</option>)}
+                            </Select>
+                          </Field>
+                          <Field label="Frequência" name={`freq${k}`} className="sm:col-span-3">
+                            <Input name={`freq${k}`} list="frequencias" maxLength={100} placeholder="Ex.: De 8 em 8 horas" value={it.frequencia} onChange={(e) => set('frequencia', e.target.value)} />
+                          </Field>
+                          <Field label="Duração" name={`dur${k}`} className="sm:col-span-3">
+                            <Input name={`dur${k}`} maxLength={100} placeholder="Ex.: 7 dias, uso contínuo" value={it.duracao} onChange={(e) => set('duracao', e.target.value)} />
+                          </Field>
+                          <Field label="Orientações deste item" name={`ori${k}`} className="sm:col-span-6">
+                            <Input name={`ori${k}`} maxLength={500} placeholder="Ex.: aplicar na lesão após o banho" value={it.orientacoes} onChange={(e) => set('orientacoes', e.target.value)} />
+                          </Field>
+                        </div>
+                      </div>
+                    )
+                  })}
                 </div>
                 {errors.items && <p className="mt-2 text-[12px] text-negative">{errors.items}</p>}
                 <Button type="button" variant="texto" small icon={Plus} className="mt-2" disabled={rx.items.length >= 20} onClick={() => setRx({ ...rx, items: [...rx.items, { ...EMPTY_ITEM }] })}>Adicionar medicamento</Button>
@@ -240,9 +291,24 @@ export default function EncounterScreen() {
               )
             })()}
           </Panel>
-          {canPrescribe && (
-            <Panel title="Registrar alergia" delay={0.1}>
-              <form className="grid gap-3" noValidate onSubmit={(ev) => { ev.preventDefault(); call('alergia', `api/encounters/${id}/allergies`, allergy, () => setAllergy({ substancia: '', reacao: '', gravidade: '' })) }}>
+          <Panel title="Alergias" meta={data.allergies.length ? `${data.allergies.length} registradas` : undefined} delay={0.1}
+            actions={canPrescribe ? <Button small variant="texto" icon={Plus} onClick={() => setAllergyOpen(true)}>Registrar</Button> : undefined}>
+            {data.allergies.length === 0 ? <p className="text-muted">Nenhuma alergia registrada.</p> : (
+              <ul className="space-y-2">
+                {data.allergies.map((a) => {
+                  const [tone, label] = SEVERITY[String(a.gravidade)] ?? ['neutral', 'Sem gravidade']
+                  return (
+                    <li key={String(a.id_alergia)} className="flex items-start justify-between gap-2 rounded-lg border border-line px-3 py-2">
+                      <span><span className="font-medium">{String(a.substancia)}</span>{a.reacao ? <span className="block text-[12px] text-muted">{String(a.reacao)}</span> : null}</span>
+                      <Badge tone={tone}>{label}</Badge>
+                    </li>
+                  )
+                })}
+              </ul>
+            )}
+          </Panel>
+          <Dialog open={allergyOpen} onClose={() => setAllergyOpen(false)} title="Registrar alergia">
+              <form className="grid gap-3" noValidate onSubmit={(ev) => { ev.preventDefault(); call('alergia', `api/encounters/${id}/allergies`, allergy, () => { setAllergy({ substancia: '', reacao: '', gravidade: '' }); setAllergyOpen(false) }) }}>
                 <Field label="Substância" name="substancia" required error={errors.substancia}><Input name="substancia" maxLength={150} value={allergy.substancia} onChange={(e) => setAllergy({ ...allergy, substancia: e.target.value })} /></Field>
                 <Field label="Reação" name="reacao"><Input name="reacao" maxLength={255} value={allergy.reacao} onChange={(e) => setAllergy({ ...allergy, reacao: e.target.value })} /></Field>
                 <Field label="Gravidade" name="gravidade">
@@ -250,15 +316,19 @@ export default function EncounterScreen() {
                     <option value="">Não informada</option><option value="leve">Leve</option><option value="moderada">Moderada</option><option value="grave">Grave</option>
                   </Select>
                 </Field>
-                <Button type="submit" loading={busy === 'alergia'}>Registrar alergia</Button>
+                <div className="mt-2 flex justify-end gap-2">
+                  <Button type="button" onClick={() => setAllergyOpen(false)}>Voltar</Button>
+                  <Button type="submit" variant="primario" loading={busy === 'alergia'}>Registrar alergia</Button>
+                </div>
               </form>
-            </Panel>
-          )}
-          <Panel title="Antecedentes e hábitos" meta="valem para todos os atendimentos" delay={0.12}>
-            {c.status === 'em_atendimento' || c.status === 'realizada'
-              ? <HealthBackgroundForm encounterId={String(id)} background={data.background} onSaved={reload} />
-              : <HealthBackgroundView background={data.background} />}
+          </Dialog>
+          <Panel title="Antecedentes e hábitos" meta="valem para todos os atendimentos" delay={0.12}
+            actions={canPrescribe ? <Button small variant="texto" icon={Pencil} onClick={() => setBackgroundOpen(true)}>Editar</Button> : undefined}>
+            <HealthBackgroundSummary background={data.background} />
           </Panel>
+          <Dialog open={backgroundOpen} onClose={() => setBackgroundOpen(false)} title="Antecedentes e hábitos" width="max-w-3xl">
+            <HealthBackgroundForm encounterId={String(id)} background={data.background} onSaved={() => { setBackgroundOpen(false); reload() }} />
+          </Dialog>
           <Panel title="Atendimentos anteriores" meta={String(data.previous_records.length)} delay={0.14}>
             {data.previous_records.length === 0 ? <p className="text-muted">Primeiro atendimento finalizado deste paciente.</p> : (
               <ul className="divide-y divide-rule">
