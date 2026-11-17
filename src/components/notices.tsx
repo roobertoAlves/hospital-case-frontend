@@ -63,7 +63,7 @@ export function Dialog({ open, onClose, title, children, width = 'max-w-md' }: {
         <motion.div className="fixed inset-0 z-40 flex items-center justify-center bg-ink/40 p-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onMouseDown={onClose}>
           <motion.div
             role="dialog" aria-modal="true" aria-label={title}
-            className={`w-full ${width} rounded-[var(--radius-sheet)] bg-surface p-6 shadow-2xl`}
+            className={`max-h-[90vh] w-full ${width} overflow-y-auto rounded-[var(--radius-sheet)] bg-surface p-6 shadow-2xl`}
             initial={{ opacity: 0, y: 24, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 12 }}
             transition={{ duration: 0.25, ease: 'easeOut' }}
             onMouseDown={(e) => e.stopPropagation()}
