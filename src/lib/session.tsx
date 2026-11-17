@@ -52,7 +52,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(async (email: string, password: string) => {
     await post('api/auth/login', { email, password })
-    return refresh() // o login gira o token CSRF e carrega permissoes
+    return refresh()
   }, [refresh])
 
   const logout = useCallback(async () => {

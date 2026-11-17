@@ -10,7 +10,6 @@ interface Data {
   allergies?: Row[]; background?: Row | null; medical_records?: Row[]; prescriptions?: Row[]; exam_requests?: Row[]; triages?: Row[]; administrative?: Row[]
 }
 
-/** Medical record sections shown in the history, in the order of the CFM model. */
 const RECORD_SECTIONS: [string, string][] = [
   ['queixa_principal', 'Queixa principal'], ['historia_doenca_atual', 'História da doença atual'],
   ['historico_relevante', 'Antecedentes relatados'], ['revisao_sistemas', 'Revisão por sistemas'], ['exame_fisico', 'Exame físico'],
@@ -19,7 +18,6 @@ const RECORD_SECTIONS: [string, string][] = [
 
 const n = (v: unknown) => (v == null ? '—' : String(v).replace(/\.0+$/, '').replace('.', ','))
 
-/** History filtered by role (decided by the backend: PatientHistoryController.level). */
 export default function PatientHistory() {
   const { id } = useParams()
   const { data, loading, error } = useApi<Data>(`api/patients/${id}/history`)

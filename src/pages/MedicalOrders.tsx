@@ -10,7 +10,6 @@ import { useApi } from '../lib/useApi'
 type Row = Record<string, unknown>
 type Status = 'pendente' | 'aprovado' | 'recusado'
 
-/** Reception reviews the medical orders attached by patients in the portal. */
 export default function MedicalOrders() {
   const notify = useNotice()
   const [status, setStatus] = useState<Status>('pendente')

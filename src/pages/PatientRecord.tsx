@@ -194,7 +194,6 @@ export default function PatientRecord() {
   )
 }
 
-/** Portal account status; reception links the account when the record has no e-mail. */
 function PortalAccount({ patientId, hasAccount, hasEmail, onLink }: { patientId: string; hasAccount: boolean; hasEmail: boolean; onLink: () => void }) {
   const { can } = useSession()
   const notify = useNotice()

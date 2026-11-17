@@ -4,7 +4,6 @@ import { useApi } from '../lib/useApi'
 type Row = Record<string, unknown>
 interface TeamData { users: number; open_tickets: number; files: number; members: Row[] }
 
-/** Manager's team overview (framework example): user, ticket and file counts plus the member list. */
 export default function Team() {
   const { data, loading, error } = useApi<TeamData>('api/dashboard/team')
   if (loading && !data) return <Loading />

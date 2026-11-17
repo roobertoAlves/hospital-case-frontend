@@ -14,7 +14,6 @@ const HIGHLIGHTS = [
   { icone: ShieldCheck, titulo: 'Prontuário protegido', texto: 'Acesso só com vínculo clínico, registro imutável e trilha de auditoria.' },
 ]
 
-/** Frame of the public screens: brand on the left, form on the right. */
 export function PublicScreen({ title, subtitle, children }: { title: string; subtitle?: string; children: ReactNode }) {
   return (
     <div className="grid min-h-screen lg:grid-cols-[1.05fr_1fr]">

@@ -17,7 +17,6 @@ const SECTIONS: { id: Section; label: string }[] = [
   { id: 'diagnostico', label: 'Diagnóstico' }, { id: 'plano', label: 'Plano' },
 ]
 
-/** Record fields in the order of the CFM model: [field, label, help, rows (0 = single line), section]. */
 const MEDICAL_RECORD: [string, string, string | null, number, Section][] = [
   ['queixa_principal', 'Queixa principal (QP)', 'Nas palavras do paciente.', 2, 'anamnese'],
   ['historia_doenca_atual', 'História da doença atual (HDA)', 'Início, intensidade, frequência, o que melhora ou piora, tratamentos já tentados.', 5, 'anamnese'],
@@ -32,7 +31,6 @@ const MEDICAL_RECORD: [string, string, string | null, number, Section][] = [
   ['encaminhamentos', 'Encaminhamentos', 'Especialidade e motivo.', 3, 'plano'],
 ]
 
-/** Dose units: not every medicine is measured in mg (ointments, drops, syrups, inhalers...). */
 const UNITS = ['mg', 'g', 'mcg', 'mL', 'gota(s)', 'comprimido(s)', 'cápsula(s)', 'UI', 'jato(s)', 'sachê(s)', 'ampola(s)',
   'adesivo(s)', 'cm (pomada)', 'aplicação(ões)', 'camada fina']
 const ROUTES = ['Oral', 'Sublingual', 'Tópica (pele)', 'Oftálmica', 'Otológica', 'Nasal', 'Inalatória', 'Retal', 'Vaginal',

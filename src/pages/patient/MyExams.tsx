@@ -19,7 +19,7 @@ export default function MyExams() {
   const { data, loading, error, reload } = useApi<Data>('api/portal/exams')
   const [mark, setMark] = useState(false)
   const [type, setType] = useState('')
-  const [origin, setOrigin] = useState('')           // "s:ID" (doctor's request) | "p:ID" (attached order) | "new" (new attachment)
+  const [origin, setOrigin] = useState('')
   const [file, setFile] = useState<File | null>(null)
   const [day, setDay] = useState('')
   const [slots, setSlots] = useState<Slot[] | null>(null)

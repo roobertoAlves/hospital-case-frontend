@@ -14,7 +14,6 @@ const TABS = [
   { to: '/minha-saude/receitas', rotulo: 'Receitas', icone: Pill },
 ]
 
-/** Patient area: navigation at the top (bottom bar on phones), without the staff menu. */
 export function PatientLayout() {
   const { user, logout } = useSession()
   const navigate = useNavigate()

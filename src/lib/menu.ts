@@ -3,19 +3,12 @@ import {
   LifeBuoy, Search, ShieldCheck, Stethoscope, UserCircle, UserPlus, Users, UsersRound, type LucideIcon,
 } from 'lucide-react'
 
-/**
- * Sidebar by PERMISSION. Hiding an item protects nothing: the backend (routes.json) decides access
- * and answers 403.
- */
 export interface ItemMenu {
   section: string; label: string; to: string; permission: string | null; icon: LucideIcon
-  /** When set, only members of one of these groups see the item (admins too, unless strict). */
   groups?: string[]
-  /** Mirrors "strictGroup" in the backend routes: not even the administrator gets in. */
   strict?: boolean
 }
 
-/** Groups that work in the hospital screens (the others only use the framework examples). */
 export const HOSPITAL_GROUPS = ['admin', 'recepcionista', 'enfermeiro', 'medico']
 
 export const MENU: ItemMenu[] = [
@@ -58,7 +51,6 @@ export function visibleItems(items: ItemMenu[], permissions: string[], groups: s
     && (!i.groups || (!i.strict && groups.includes('admin')) || i.groups.some((g) => groups.includes(g))))
 }
 
-/** Where a signed-in staff user lands: the hospital dashboard, or the first example screen of their group. */
 export function homeFor(groups: string[]): string {
   if (HOSPITAL_GROUPS.some((g) => groups.includes(g))) return '/painel'
   if (groups.includes('gerente')) return '/equipe'

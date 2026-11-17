@@ -10,7 +10,6 @@ import { useApi } from '../lib/useApi'
 type Row = Record<string, unknown>
 interface Options { specialties: Row[]; today: string; patient?: Row; original?: Row }
 
-/** Book an appointment (/agenda/nova) or reschedule one (/agenda/:id/remarcar). */
 export default function AppointmentForm() {
   const { id } = useParams()
   const reschedule = !!id

@@ -31,7 +31,6 @@ function Chips({ options, current, onChange, label = (s: string) => s }: { optio
   )
 }
 
-/** Public catalog: anyone can browse; booking requires signing in (or creating an account). */
 export default function Catalog() {
   const { aba: tabParam } = useParams()
   const tab: Tab = tabParam === 'exames' || tabParam === 'vacinas' ? tabParam : 'consultas'

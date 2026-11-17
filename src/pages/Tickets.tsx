@@ -18,7 +18,6 @@ const STATUS: Record<string, [string, 'warning' | 'accent' | 'positive']> = {
   fechado: ['Fechado', 'positive'],
 }
 
-/** Teams that receive tickets and the subjects each one handles (codes stored by the backend). */
 const TEAMS: Record<string, { label: string; subjects: Record<string, string> }> = {
   ti: { label: 'TI', subjects: { acesso: 'Acesso a sistemas', senha: 'Senha e bloqueio de conta', equipamento: 'Computador ou impressora', sistema: 'Erro no sistema', rede: 'Internet e rede', outro: 'Outro assunto' } },
   produtos: { label: 'Produtos', subjects: { erro: 'Algo não funciona como deveria', melhoria: 'Sugestão de melhoria', duvida: 'Dúvida de uso', outro: 'Outro assunto' } },
@@ -27,7 +26,6 @@ const TEAMS: Record<string, { label: string; subjects: Record<string, string> }>
   rh: { label: 'Recursos humanos', subjects: { ponto: 'Ponto e escala', beneficios: 'Benefícios', ferias: 'Férias', outro: 'Outro assunto' } },
 }
 
-/** Support tickets (framework example): everyone opens tickets; the support group moves them along. */
 export default function Tickets() {
   const notify = useNotice()
   const { inGroup } = useSession()

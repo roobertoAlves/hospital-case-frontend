@@ -29,11 +29,9 @@ const AuditLog = lazy(() => import('./pages/AuditLog'))
 const Admin = lazy(() => import('./pages/Admin'))
 const MedicalOrders = lazy(() => import('./pages/MedicalOrders'))
 const VaccinationRoom = lazy(() => import('./pages/VaccinationRoom'))
-// Framework example screens (support tickets, profile and files, manager's team overview)
 const Tickets = lazy(() => import('./pages/Tickets'))
 const Profile = lazy(() => import('./pages/Profile'))
 const Team = lazy(() => import('./pages/Team'))
-// Public site and patient portal
 const Home = lazy(() => import('./pages/public/Home'))
 const Catalog = lazy(() => import('./pages/public/Catalog'))
 const SignUp = lazy(() => import('./pages/public/SignUp'))
@@ -45,7 +43,6 @@ const MyPrescriptions = lazy(() => import('./pages/patient/MyPrescriptions'))
 
 export const isPatient = (u: User | null) => !!u && u.groups.includes('paciente')
 
-/** Staff: signed in, no pending temporary password and not a patient (the backend also blocks it). */
 function Protected({ children }: { children: ReactNode }) {
   const { loading, user } = useSession()
   const local = useLocation()
@@ -64,7 +61,6 @@ function PatientOnly({ children }: { children: ReactNode }) {
   return <>{children}</>
 }
 
-/** "/": visitors see the site; patients go to My health; staff go to the dashboard. */
 function Root() {
   const { loading, user } = useSession()
   if (loading) return <div className="p-8"><Loading /></div>

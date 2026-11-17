@@ -32,7 +32,6 @@ export default function TriageForm() {
     v.id_classificacao = String(t.id_classificacao ?? '')
     v.motivo_retificacao = ''
     f.setValues(v)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data])
 
   if (loading && !data) return <Loading />
