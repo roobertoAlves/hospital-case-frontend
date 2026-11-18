@@ -80,7 +80,7 @@ export default function PatientRecord() {
         </>}
       />
 
-      <div className={data.allergies.length ? 'mb-5 rounded-[var(--radius-card)] border border-red-200 bg-red-50 px-4 py-3' : 'mb-5 rounded-[var(--radius-card)] border border-line bg-frame px-4 py-3'}>
+      {data.clinical_access && <div className={data.allergies.length ? 'mb-5 rounded-[var(--radius-card)] border border-red-200 bg-red-50 px-4 py-3' : 'mb-5 rounded-[var(--radius-card)] border border-line bg-frame px-4 py-3'}>
         <p className="flex items-center gap-2 font-medium"><AlertTriangle className={data.allergies.length ? 'size-4 text-negative' : 'size-4 text-muted'} />
           {data.allergies.length ? `Alergias (${data.allergies.length})` : 'Nenhuma alergia registrada'}</p>
         {data.allergies.length > 0 && (
@@ -96,7 +96,7 @@ export default function PatientRecord() {
             })}
           </ul>
         )}
-      </div>
+      </div>}
 
       <div className="grid gap-5 xl:grid-cols-[5fr_7fr]">
         <div className="grid content-start gap-5">
@@ -174,7 +174,7 @@ export default function PatientRecord() {
               </Table>
             )}
           </Panel>
-          <Panel title="Vacinas aplicadas" meta={`${data.vaccines.length} doses`} noPadding delay={0.14}>
+          {data.clinical_access && <Panel title="Vacinas aplicadas" meta={`${data.vaccines.length} doses`} noPadding delay={0.14}>
             {data.vaccines.length === 0 ? <div className="p-5"><Empty>Nenhuma vacina registrada na clínica.</Empty></div> : (
               <Table header={<><Th>Data</Th><Th>Vacina</Th><Th className="hidden md:table-cell">Lote</Th></>}>
                 {data.vaccines.map((v) => (
@@ -186,7 +186,7 @@ export default function PatientRecord() {
                 ))}
               </Table>
             )}
-          </Panel>
+          </Panel>}
         </div>
       </div>
       <PortalAccount patientId={String(id)} hasAccount={p.id_usuario != null} hasEmail={!!p.email} onLink={reload} />
@@ -194,7 +194,6 @@ export default function PatientRecord() {
   )
 }
 
-/** Portal account status; reception links the account when the record has no e-mail. */
 function PortalAccount({ patientId, hasAccount, hasEmail, onLink }: { patientId: string; hasAccount: boolean; hasEmail: boolean; onLink: () => void }) {
   const { can } = useSession()
   const notify = useNotice()

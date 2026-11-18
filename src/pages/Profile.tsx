@@ -17,7 +17,6 @@ function size(bytes: unknown) {
   return n >= 1024 * 1024 ? `${(n / 1024 / 1024).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1024))} KB`
 }
 
-/** Profile (name, photo and password) and the Base64 file upload with access control. */
 export default function Profile() {
   const notify = useNotice()
   const { user, refresh } = useSession()

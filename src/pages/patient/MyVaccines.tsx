@@ -33,7 +33,6 @@ export default function MyVaccines() {
   if (loading && !data) return <Loading />
   if (error || !data) return <Empty>{error?.message}</Empty>
 
-  // Card: administered doses per vaccine, following each vaccine's scheme.
   const byVaccine = data.catalog.map((v) => ({ v, doses: data.administered.filter((a) => a.id_vacina === v.id_vacina) })).filter((x) => x.doses.length > 0)
   const pendingOnes = data.scheduled.filter((a) => a.status === 'agendada')
 

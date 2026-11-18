@@ -2,13 +2,15 @@ import { FileUp, FlaskConical, Paperclip } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { ReasonDialog, useNotice } from '../../components/notices'
 import { SlotGrid, type Slot } from '../../components/booking'
-import { Alert, Button, PageHeader, Field, Loading, Input, Panel, Badge, Select, Empty, cx } from '../../components/ui'
+import { SearchSelect } from '../../components/SearchSelect'
+import { Alert, Button, PageHeader, Field, Loading, Input, Panel, Badge, Empty, cx } from '../../components/ui'
+import { examRequestStatus } from '../../lib/documents'
 import { openFile, ApiError, get, readFile, post } from '../../lib/api'
-import { groupBy, formatDate, formatDateTime, formatTime, categoryLabel, examStatus } from '../../lib/format'
+import { formatDate, formatDateTime, formatTime, categoryLabel, examStatus } from '../../lib/format'
 import { useApi } from '../../lib/useApi'
 
 type Row = Record<string, unknown>
-interface Data { exams: Row[]; exam_requests: Row[]; medical_orders: Row[]; types: Row[]; today: string }
+interface Data { exams: Row[]; exam_requests: Row[]; all_requests: Row[]; medical_orders: Row[]; types: Row[]; today: string }
 
 const ORDER: Record<string, ['warning' | 'positive' | 'negative', string]> = {
   pendente: ['warning', 'Em conferência'], aprovado: ['positive', 'Aprovado'], recusado: ['negative', 'Recusado'],
@@ -19,7 +21,7 @@ export default function MyExams() {
   const { data, loading, error, reload } = useApi<Data>('api/portal/exams')
   const [mark, setMark] = useState(false)
   const [type, setType] = useState('')
-  const [origin, setOrigin] = useState('')           // "s:ID" (doctor's request) | "p:ID" (attached order) | "new" (new attachment)
+  const [origin, setOrigin] = useState('')
   const [file, setFile] = useState<File | null>(null)
   const [day, setDay] = useState('')
   const [slots, setSlots] = useState<Slot[] | null>(null)
@@ -72,14 +74,14 @@ export default function MyExams() {
         <Panel title="Marcar exame" className="mb-5">
           <div className="grid gap-4">
             <Field label="Exame" name="tipoExame">
-              <Select name="tipoExame" value={type} onChange={(e) => { setType(e.target.value); setOrigin('') }}>
-                <option value="">Escolha…</option>
-                {groupBy(data.types, 'categoria').map(([g, list]) => (
-                  <optgroup key={g} label={categoryLabel(g)}>
-                    {list.map((x) => <option key={String(x.id_tipo_exame)} value={String(x.id_tipo_exame)}>{String(x.nome)}{String(x.exige_pedido) === '1' ? ' (exige pedido)' : ''}</option>)}
-                  </optgroup>
-                ))}
-              </Select>
+              <SearchSelect name="tipoExame" value={type} placeholder="Nome ou código do exame"
+                options={data.types.map((x) => ({ value: String(x.id_tipo_exame), label: String(x.nome), code: x.codigo ? String(x.codigo) : undefined,
+                  group: categoryLabel(x.categoria), hint: String(x.exige_pedido) === '1' ? 'exige pedido médico' : 'sem pedido' }))}
+                onChange={(v) => {
+                  setType(v)
+                  const fromDoctor = data.exam_requests.find((s) => String(s.id_tipo_exame) === v)
+                  setOrigin(fromDoctor ? `s:${fromDoctor.id_exame}` : '')
+                }} />
             </Field>
             {t && <Alert><strong>Preparo:</strong> {String(t.preparo ?? 'Sem preparo especial.')} · {String(t.local)} · {String(t.duracao_min)} min</Alert>}
             {requires && (
@@ -138,12 +140,27 @@ export default function MyExams() {
           )}
         </Panel>
         <div className="grid content-start gap-5">
-          {data.exam_requests.length > 0 && (
-            <Panel title="Pedidos do seu médico" delay={0.06}>
-              <ul className="space-y-2 text-[14px]">{data.exam_requests.map((s) => <li key={String(s.id_exame)}><strong>{String(s.nome_exame)}</strong> <span className="text-muted">· {String(s.medico)}</span></li>)}</ul>
-              <p className="mt-3 text-[12px] text-faint">Já estão no sistema: ao marcar o exame, escolha o pedido e não precisa anexar.</p>
-            </Panel>
-          )}
+          <Panel title="Exames pedidos pelo médico" meta={String(data.all_requests.length)} delay={0.06}>
+            {data.all_requests.length === 0 ? <p className="text-muted">Nenhum exame pedido pelos médicos da clínica.</p> : (
+              <ul className="divide-y divide-rule">
+                {data.all_requests.map((s) => {
+                  const [label, tone] = examRequestStatus(s)
+                  const open = s.status === 'solicitado' && !s.agendado_para && !!s.id_tipo_exame
+                  return (
+                    <li key={String(s.id_exame)} className="py-2.5 first:pt-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="grow font-medium">{s.codigo ? <span className="num mr-1.5 text-brand-700">{String(s.codigo)}</span> : null}{String(s.nome_exame)}</span>
+                        <Badge tone={tone}>{label}</Badge>
+                      </div>
+                      <p className="text-[12px] text-muted">{String(s.medico)} · {formatDate(s.solicitado_em)}{s.justificativa ? ` · ${s.justificativa}` : ''}</p>
+                      {open && <Button small variant="texto" className="mt-1 px-0" onClick={() => { setMark(true); setType(String(s.id_tipo_exame)); setOrigin(`s:${s.id_exame}`); window.scrollTo({ top: 0, behavior: 'smooth' }) }}>Marcar este exame</Button>}
+                    </li>
+                  )
+                })}
+              </ul>
+            )}
+            <p className="mt-3 text-[12px] text-faint">Pedidos feitos no sistema dispensam anexar papel.</p>
+          </Panel>
           <Panel title="Pedidos anexados" delay={0.1}>
             {data.medical_orders.length === 0 ? <p className="text-muted">Nenhum pedido enviado.</p> : (
               <ul className="divide-y divide-rule">

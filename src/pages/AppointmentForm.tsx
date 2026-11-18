@@ -2,15 +2,16 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router'
 import { useNotice } from '../components/notices'
 import { PatientSearch, SlotGrid, type Slot, type SelectedPatient } from '../components/booking'
-import { Alert, Button, ButtonLink, PageHeader, Field, Loading, Input, FormSection, Select, Empty } from '../components/ui'
+import { SearchSelect } from '../components/SearchSelect'
+import { Alert, Badge, Button, ButtonLink, PageHeader, Field, Loading, Input, FormSection, Empty } from '../components/ui'
+import { REFERRAL_PRIORITY } from '../lib/documents'
 import { ApiError, get, post } from '../lib/api'
 import { maskedCpf, formatDate, formatTime, appointmentStatus } from '../lib/format'
 import { useApi } from '../lib/useApi'
 
 type Row = Record<string, unknown>
-interface Options { specialties: Row[]; today: string; patient?: Row; original?: Row }
+interface Options { specialties: Row[]; today: string; patient?: Row; original?: Row; open_referrals?: Row[] }
 
-/** Book an appointment (/agenda/nova) or reschedule one (/agenda/:id/remarcar). */
 export default function AppointmentForm() {
   const { id } = useParams()
   const reschedule = !!id
@@ -20,6 +21,7 @@ export default function AppointmentForm() {
   const { data, loading, error } = useApi<Options>(reschedule ? `api/appointments/${id}/reschedule` : 'api/appointments/options', reschedule ? undefined : { patient: params.get('paciente') })
 
   const [patient, setPatient] = useState<SelectedPatient | null>(null)
+  const [referrals, setReferrals] = useState<Row[]>([])
   const [specialty, setSpecialty] = useState('')
   const [doctors, setDoctors] = useState<Row[] | null>(null)
   const [doctor, setDoctor] = useState('')
@@ -44,10 +46,20 @@ export default function AppointmentForm() {
   }, [data])
 
   useEffect(() => {
+    setReferrals([])
+    if (!patient || reschedule) return
+    get<Options>('api/appointments/options', { patient: patient.id_paciente }).then((r) => {
+      const open = r.data.open_referrals ?? []
+      setReferrals(open)
+      if (open.length === 1) setSpecialty((s) => s || String(open[0].id_especialidade))
+    }).catch(() => undefined)
+  }, [patient, reschedule])
+
+  useEffect(() => {
     if (!specialty) { setDoctors(null); return }
     get<Row[]>('api/appointments/doctors', { specialty: specialty }).then((r) => {
       setDoctors(r.data)
-      setDoctor((m) => (r.data.some((x) => String(x.id_profissional) === m) ? m : ''))
+      setDoctor((m) => (r.data.some((x) => String(x.id_profissional) === m) ? m : r.data.length === 1 ? String(r.data[0].id_profissional) : ''))
     }).catch(() => setDoctors([]))
   }, [specialty])
 
@@ -93,17 +105,33 @@ export default function AppointmentForm() {
           <div className="max-w-[540px] sm:col-span-6"><PatientSearch value={patient} onChoose={setPatient} locked={reschedule} /></div>
         </FormSection>
         <FormSection title="Especialidade e médico" description="Só médicos ativos que atendem a especialidade.">
+          {referrals.length > 0 && (
+            <div className="grid gap-2 sm:col-span-6">
+              <p className="text-[13px] font-medium">Encaminhamentos em aberto deste paciente</p>
+              <div className="flex flex-wrap gap-2">
+                {referrals.map((r) => {
+                  const [label, tone] = REFERRAL_PRIORITY[String(r.prioridade)] ?? ['—', 'neutral']
+                  const on = specialty === String(r.id_especialidade)
+                  return (
+                    <button key={String(r.id_encaminhamento)} type="button" onClick={() => setSpecialty(String(r.id_especialidade))}
+                      className={`rounded-[var(--radius-card)] border px-3 py-2 text-left ${on ? 'border-ink bg-brand-50' : 'border-line hover:bg-raised'}`}>
+                      <span className="flex items-center gap-2 font-medium">{String(r.especialidade)} <Badge tone={tone}>{label}</Badge></span>
+                      <span className="block text-[12px] text-muted">{String(r.medico)} · {String(r.motivo).slice(0, 80)}</span>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
           <Field label="Especialidade" name="esp" required className="sm:col-span-3">
-            <Select name="esp" value={specialty} onChange={(e) => setSpecialty(e.target.value)} disabled={reschedule}>
-              <option value="">Escolha…</option>
-              {data.specialties.map((e) => <option key={String(e.id_especialidade)} value={String(e.id_especialidade)}>{String(e.nome)}</option>)}
-            </Select>
+            <SearchSelect name="esp" value={specialty} disabled={reschedule} placeholder="Busque a especialidade"
+              options={data.specialties.map((e) => ({ value: String(e.id_especialidade), label: String(e.nome) }))}
+              onChange={(v) => setSpecialty(v)} />
           </Field>
-          <Field label="Médico" name="med" required className="sm:col-span-3">
-            <Select name="med" value={doctor} onChange={(e) => setDoctor(e.target.value)} disabled={!doctors}>
-              <option value="">{doctors ? 'Escolha…' : 'Escolha a especialidade primeiro'}</option>
-              {(doctors ?? []).map((m) => <option key={String(m.id_profissional)} value={String(m.id_profissional)}>{String(m.nome)} · CRM {String(m.crm)}/{String(m.crm_uf)}</option>)}
-            </Select>
+          <Field label="Médico" name="med" required className="sm:col-span-3" help={doctors?.length === 1 ? 'Único médico desta especialidade: já escolhido.' : undefined}>
+            <SearchSelect name="med" value={doctor} disabled={!doctors} placeholder={doctors ? 'Busque o médico' : 'Escolha a especialidade primeiro'}
+              options={(doctors ?? []).map((m) => ({ value: String(m.id_profissional), label: String(m.nome), hint: `CRM ${m.crm}/${m.crm_uf}` }))}
+              onChange={(v) => setDoctor(v)} />
           </Field>
         </FormSection>
         <FormSection title="Data e horário" description="Horários na grade do médico. Riscados: ocupados ou já passados.">

@@ -1,13 +1,3 @@
-/**
- * Client for the backend API (hospital-case-backend).
- *
- * - In development the base is "/hospital-case-backend" and Vite proxies it to Tomcat (same origin:
- *   the session cookie is sent automatically). VITE_API_BASE changes the base for a build.
- * - Every state-changing request carries the CSRF token in the X-CSRF-Token header; the token comes
- *   from GET /api/auth/session and is renewed after login.
- * - Responses follow the backend JsonResponse: { status, code, message, data } or
- *   { status: false, error, message, details }.
- */
 export const API_BASE: string = import.meta.env.VITE_API_BASE ?? '/hospital-case-backend'
 
 export class ApiError extends Error {
@@ -38,13 +28,11 @@ export function setCsrf(token: string) {
 
 type Listener = (e: ApiError) => void
 const listeners = new Set<Listener>()
-/** Tells the app about a 401 (expired session) and about a mandatory password change. */
 export function onSessionError(fn: Listener) {
   listeners.add(fn)
   return () => { listeners.delete(fn) }
 }
 
-/** Plain numbers become text: the backend reads fields as text (like a form). */
 function normalize(body: Record<string, unknown>): Record<string, unknown> {
   const out: Record<string, unknown> = {}
   for (const [k, v] of Object.entries(body)) {
@@ -95,7 +83,6 @@ export function get<T>(path: string, params?: Record<string, string | number | b
   return request<T>('GET', q ? `${path}?${q}` : path)
 }
 
-/** Downloads a protected file (with the session cookie) and opens it in a new tab. */
 export async function openFile(path: string) {
   const r = await fetch(`${API_BASE}/${path.replace(/^\/+/, '')}`, { credentials: 'include' })
   if (!r.ok) throw new ApiError(r.status, 'ERR_ARQUIVO', 'Não foi possível abrir o arquivo.')
@@ -104,7 +91,6 @@ export async function openFile(path: string) {
   setTimeout(() => URL.revokeObjectURL(url), 60_000)
 }
 
-/** Reads a file chosen by the user as a data URI (to send in JSON). */
 export function readFile(f: File): Promise<string> {
   return new Promise((ok, error) => {
     const reader = new FileReader()

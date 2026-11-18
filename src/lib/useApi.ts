@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { ApiError, get } from './api'
 
-/** Loads an API read and reloads it when the key (path + parameters) changes. */
 export function useApi<T>(path: string | null, params?: Record<string, string | number | boolean | null | undefined>) {
   const [data, setData] = useState<T | null>(null)
   const [error, setError] = useState<ApiError | null>(null)
@@ -20,7 +19,6 @@ export function useApi<T>(path: string | null, params?: Record<string, string | 
     } finally {
       setLoading(false)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key])
 
   useEffect(() => { reload() }, [reload])

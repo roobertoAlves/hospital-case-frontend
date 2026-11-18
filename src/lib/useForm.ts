@@ -3,10 +3,6 @@ import { useNavigate } from 'react-router'
 import { useNotice } from '../components/notices'
 import { ApiError, post } from './api'
 
-/**
- * Form state + submission to the API. Validation errors (422) come per field in "details" and are
- * shown under each field; the server decides what is valid.
- */
 export function useForm<T extends Record<string, unknown>>(initial: T) {
   const [values, setValues] = useState<T>(initial)
   const [errors, setErrors] = useState<Record<string, string>>({})

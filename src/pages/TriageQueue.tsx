@@ -32,7 +32,7 @@ export default function TriageQueue() {
 
   return (
     <>
-      <PageHeader title="Fila de triagem" subtitle={`${waiting} aguardando · ${data.queue.length - waiting} em triagem agora · por ordem de chegada`}
+      <PageHeader title="Fila de triagem" subtitle={`${waiting} aguardando · ${data.queue.length - waiting} em triagem agora · emergências primeiro, depois por ordem de chegada`}
         actions={<Button onClick={reload}>Atualizar</Button>} />
       <div className="grid gap-5 xl:grid-cols-[2fr_1fr]">
         <Panel title="Pacientes que chegaram" meta="a recepção registra a chegada" noPadding>
@@ -46,8 +46,10 @@ export default function TriageQueue() {
                 return (
                   <tr key={id}>
                     <Td className="num font-semibold">{formatTime(c.chegada_em)}</Td>
-                    <Td><Main sub={years !== null ? `${years} anos` : undefined}>{String(c.paciente)}</Main></Td>
-                    <Td className="hidden md:table-cell"><Main sub={`${c.especialidade} · ${formatTime(c.data_hora)}`}>{String(c.medico)}</Main></Td>
+                    <Td><Main sub={c.tipo === 'emergencia' ? String(c.motivo_emergencia ?? '') : years !== null ? `${years} anos` : undefined}>
+                      <span className="inline-flex flex-wrap items-center gap-2">{String(c.paciente)}{c.tipo === 'emergencia' && <Badge tone="negative">Emergência</Badge>}</span></Main></Td>
+                    <Td className="hidden md:table-cell">{c.tipo === 'emergencia' ? <Main sub="médico plantonista">Pronto atendimento</Main>
+                      : <Main sub={`${c.especialidade} · ${formatTime(c.data_hora)}`}>{String(c.medico)}</Main>}</Td>
                     <Td><Badge tone={tone}>{label}</Badge></Td>
                     <Td className="text-right">
                       {inTriage ? <ButtonLink to={`/triagem/${id}`} small>Continuar</ButtonLink>

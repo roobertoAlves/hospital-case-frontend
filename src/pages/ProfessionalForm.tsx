@@ -39,7 +39,6 @@ export default function ProfessionalForm() {
     f.setValues(v)
     setSpecialtyIds(((p.specialty_ids as unknown[]) ?? []).map(String))
     setRanges(((p.availability as Row[]) ?? []).map((x) => ({ dia_semana: String(x.dia_semana), hora_inicio: String(x.hora_inicio), hora_fim: String(x.hora_fim) })))
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data])
 
   if (loading && !data) return <Loading />

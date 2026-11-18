@@ -2,7 +2,6 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { todayIso, addDays } from '../lib/format'
 import { Button } from './ui'
 
-/** Previous / date / next / today: changes the screen's ?data= parameter. */
 export function DayNavigator({ date, onChange }: { date: string; onChange: (d: string) => void }) {
   return (
     <div className="flex items-center gap-2">

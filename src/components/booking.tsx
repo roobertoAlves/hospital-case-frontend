@@ -8,7 +8,6 @@ import { cx } from './ui'
 
 export interface SelectedPatient { id_paciente: number; nome: string; cpf: string }
 
-/** Patient search with suggestions (GET api/patients/search); active patients only. */
 export function PatientSearch({ value, onChoose, locked }: { value: SelectedPatient | null; onChoose: (p: SelectedPatient | null) => void; locked?: boolean }) {
   const [q, setQ] = useState('')
   const [list, setList] = useState<SelectedPatient[] | null>(null)
@@ -67,7 +66,6 @@ export function PatientSearch({ value, onChoose, locked }: { value: SelectedPati
 
 export interface Slot { time: string; free: boolean }
 
-/** Slot grid: free slots are clickable, taken ones are struck through. */
 export function SlotGrid({ slots, loading, selected, onChoose, emptyText }: {
   slots: Slot[] | null; loading: boolean; selected: string; onChoose: (h: string) => void; emptyText?: string
 }) {
