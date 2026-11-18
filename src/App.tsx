@@ -22,6 +22,9 @@ const TriageForm = lazy(() => import('./pages/TriageForm'))
 const EncounterQueue = lazy(() => import('./pages/EncounterQueue'))
 const EncounterScreen = lazy(() => import('./pages/EncounterScreen'))
 const PrescriptionPrint = lazy(() => import('./pages/PrescriptionPrint'))
+const CertificatePrint = lazy(() => import('./pages/CertificatePrint'))
+const EmergencyForm = lazy(() => import('./pages/EmergencyForm'))
+const ExamCatalog = lazy(() => import('./pages/ExamCatalog'))
 const Professionals = lazy(() => import('./pages/Professionals'))
 const ProfessionalForm = lazy(() => import('./pages/ProfessionalForm'))
 const Specialties = lazy(() => import('./pages/Specialties'))
@@ -29,11 +32,9 @@ const AuditLog = lazy(() => import('./pages/AuditLog'))
 const Admin = lazy(() => import('./pages/Admin'))
 const MedicalOrders = lazy(() => import('./pages/MedicalOrders'))
 const VaccinationRoom = lazy(() => import('./pages/VaccinationRoom'))
-// Framework example screens (support tickets, profile and files, manager's team overview)
 const Tickets = lazy(() => import('./pages/Tickets'))
 const Profile = lazy(() => import('./pages/Profile'))
 const Team = lazy(() => import('./pages/Team'))
-// Public site and patient portal
 const Home = lazy(() => import('./pages/public/Home'))
 const Catalog = lazy(() => import('./pages/public/Catalog'))
 const SignUp = lazy(() => import('./pages/public/SignUp'))
@@ -42,10 +43,10 @@ const MyAppointments = lazy(() => import('./pages/patient/MyAppointments'))
 const MyExams = lazy(() => import('./pages/patient/MyExams'))
 const MyVaccines = lazy(() => import('./pages/patient/MyVaccines'))
 const MyPrescriptions = lazy(() => import('./pages/patient/MyPrescriptions'))
+const MyDocuments = lazy(() => import('./pages/patient/MyDocuments'))
 
 export const isPatient = (u: User | null) => !!u && u.groups.includes('paciente')
 
-/** Staff: signed in, no pending temporary password and not a patient (the backend also blocks it). */
 function Protected({ children }: { children: ReactNode }) {
   const { loading, user } = useSession()
   const local = useLocation()
@@ -64,7 +65,6 @@ function PatientOnly({ children }: { children: ReactNode }) {
   return <>{children}</>
 }
 
-/** "/": visitors see the site; patients go to My health; staff go to the dashboard. */
 function Root() {
   const { loading, user } = useSession()
   if (loading) return <div className="p-8"><Loading /></div>
@@ -91,9 +91,11 @@ const router = createBrowserRouter([
       { path: 'exames', element: page(<MyExams />) },
       { path: 'vacinas', element: page(<MyVaccines />) },
       { path: 'receitas', element: page(<MyPrescriptions />) },
+      { path: 'documentos', element: page(<MyDocuments />) },
     ],
   },
   { path: '/minha-saude/receitas/:id', element: <PatientOnly>{page(<PrescriptionPrint portal />)}</PatientOnly> },
+  { path: '/minha-saude/atestados/:id', element: <PatientOnly>{page(<CertificatePrint portal />)}</PatientOnly> },
   {
     element: <Protected><Layout /></Protected>,
     children: [
@@ -108,6 +110,8 @@ const router = createBrowserRouter([
       { path: 'agenda/:id/remarcar', element: page(<AppointmentForm />) },
       { path: 'exames', element: page(<Exams />) },
       { path: 'exames/novo', element: page(<ExamForm />) },
+      { path: 'emergencia', element: page(<EmergencyForm />) },
+      { path: 'catalogo-exames', element: page(<ExamCatalog />) },
       { path: 'pedidos', element: page(<MedicalOrders />) },
       { path: 'vacinas', element: page(<VaccinationRoom />) },
       { path: 'triagem', element: page(<TriageQueue />) },
@@ -127,6 +131,7 @@ const router = createBrowserRouter([
     ],
   },
   { path: '/receitas/:id', element: <Protected>{page(<PrescriptionPrint />)}</Protected> },
+  { path: '/atestados/:id', element: <Protected>{page(<CertificatePrint />)}</Protected> },
 ])
 
 export default function App() {

@@ -1,4 +1,3 @@
-/** Typing masks (formatting only; the backend validates). */
 const dig = (v: string, max: number) => v.replace(/\D/g, '').slice(0, max)
 
 export function maskCpf(v: string) {

@@ -28,7 +28,6 @@ export default function PatientForm() {
     v.cpf = formattedCpf(v.cpf)
     v.cep = maskCep(v.cep)
     f.setValues(v)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data])
 
   if (editing && loading && !data) return <Loading />

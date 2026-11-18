@@ -17,7 +17,6 @@ const TEXTS: [string, string][] = [
   ['medicamentos_uso_continuo', 'Medicamentos de uso contínuo'],
 ]
 
-/** Read-only health background (personal history, lifestyle habits and family history). */
 export function HealthBackgroundView({ background }: { background: Row | null }) {
   if (!background) return <p className="text-muted">Antecedentes ainda não registrados pelo médico.</p>
   const b = background
@@ -51,7 +50,6 @@ export function HealthBackgroundView({ background }: { background: Row | null })
   )
 }
 
-/** Compact background for side panels: the items a doctor scans before the visit. */
 export function HealthBackgroundSummary({ background }: { background: Row | null }) {
   if (!background) return <p className="text-muted">Antecedentes ainda não registrados.</p>
   const b = background
@@ -72,7 +70,6 @@ export function HealthBackgroundSummary({ background }: { background: Row | null
   )
 }
 
-/** Editable health background, saved through the encounter (doctor with a care link). */
 export function HealthBackgroundForm({ encounterId, background, onSaved }: { encounterId: string; background: Row | null; onSaved: () => void }) {
   const notify = useNotice()
   const [values, setValues] = useState<Record<string, string>>({})

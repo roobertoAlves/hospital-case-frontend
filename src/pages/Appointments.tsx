@@ -60,7 +60,7 @@ export default function Appointments() {
                     <tr key={id}>
                       <Td className="num text-[15px] font-semibold">{formatTime(c.data_hora)}</Td>
                       <Td>
-                        <Main sub={`${c.tipo === 'encaixe' ? 'Encaixe · ' : ''}${c.especialidade}`}>
+                        <Main sub={`${c.tipo === 'encaixe' ? 'Encaixe · ' : c.tipo === 'emergencia' ? 'Emergência · ' : ''}${c.especialidade}`}>
                           {can('pacientes.view') ? <Link to={`/pacientes/${c.id_paciente}`} className="hover:text-brand-700">{String(c.paciente)}</Link> : String(c.paciente)}
                         </Main>
                       </Td>

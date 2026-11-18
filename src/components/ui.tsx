@@ -7,9 +7,6 @@ import type { Tone } from '../lib/format'
 const cx = (...c: (string | false | null | undefined)[]) => c.filter(Boolean).join(' ')
 export { cx }
 
-/* ------------------------------------------------------------------ entrance animation */
-
-/** Soft entrance (rises and fades in), short enough for daily use. */
 export function FadeIn({ children, delay = 0, className }: { children: ReactNode; delay?: number; className?: string }) {
   return (
     <motion.div
@@ -22,8 +19,6 @@ export function FadeIn({ children, delay = 0, className }: { children: ReactNode
     </motion.div>
   )
 }
-
-/* ------------------------------------------------------------------ buttons */
 
 type Variant = 'primario' | 'secundario' | 'texto' | 'perigo' | 'perigoTexto'
 const VAR: Record<Variant, string> = {
@@ -78,8 +73,6 @@ export function ButtonLink({ to, variant = 'secundario', small, icon: Icon, chil
   )
 }
 
-/* ------------------------------------------------------------------ page header */
-
 export function PageHeader({ title, subtitle, actions, breadcrumb }: {
   title: ReactNode; subtitle?: ReactNode; actions?: ReactNode; breadcrumb?: { label: string; to?: string }[]
 }) {
@@ -105,8 +98,6 @@ export function PageHeader({ title, subtitle, actions, breadcrumb }: {
     </FadeIn>
   )
 }
-
-/* ------------------------------------------------------------------ panels */
 
 export function Panel({ title, meta, actions, children, className, delay = 0.05, noPadding }: {
   title?: ReactNode; meta?: ReactNode; actions?: ReactNode; children: ReactNode; className?: string; delay?: number; noPadding?: boolean
@@ -134,8 +125,6 @@ export function Kpi({ label, value, note, highlight, delay = 0 }: { label: strin
   )
 }
 
-/* ------------------------------------------------------------------ badges */
-
 const TONE: Record<Tone, string> = {
   neutral: 'bg-[#ebeeed] text-[#353a39]',
   positive: 'bg-[#dcfae5] text-[#04250e]',
@@ -156,8 +145,6 @@ export function Priority({ color, name }: { color?: unknown; name?: unknown }) {
     </span>
   )
 }
-
-/* ------------------------------------------------------------------ forms */
 
 export function Field({ label, name, required, help, error, children, className }: {
   label: ReactNode; name?: string; required?: boolean; help?: ReactNode; error?: string; children: ReactNode; className?: string
@@ -186,7 +173,6 @@ export function TextArea({ invalid, className, ...r }: TextareaHTMLAttributes<HT
   return <textarea {...r} id={r.id ?? r.name} aria-invalid={invalid || undefined} className={cx('field-input', className)} />
 }
 
-/** Two-column form block (title + explanation | fields). */
 export function FormSection({ title, description, children }: { title: string; description?: ReactNode; children: ReactNode }) {
   return (
     <section className="grid gap-5 border-b border-rule py-6 first:pt-0 last:border-0 md:grid-cols-[260px_1fr]">
@@ -198,8 +184,6 @@ export function FormSection({ title, description, children }: { title: string; d
     </section>
   )
 }
-
-/* ------------------------------------------------------------------ states */
 
 export function Empty({ children, icon: Icon }: { children: ReactNode; icon?: ComponentType<{ className?: string }> }) {
   return (
@@ -222,8 +206,6 @@ export function Alert({ tone = 'nota', children }: { tone?: 'nota' | 'erro' | 'o
   const c = tone === 'erro' ? 'border-red-200 bg-red-50 text-[#831c1e]' : tone === 'ok' ? 'border-green-200 bg-green-50 text-[#04250e]' : 'border-amber-200 bg-amber-50 text-[#5c3a07]'
   return <div className={cx('rounded-[var(--radius-card)] border px-4 py-3 text-[13px]', c)} role={tone === 'erro' ? 'alert' : 'status'}>{children}</div>
 }
-
-/* ------------------------------------------------------------------ table */
 
 export function Table({ header, children }: { header: ReactNode; children: ReactNode }) {
   return (
@@ -250,8 +232,6 @@ export function Main({ children, sub }: { children: ReactNode; sub?: ReactNode }
   )
 }
 
-/* ------------------------------------------------------------------ tabs */
-
 export function Tabs<T extends string>({ tabs, current, onChange }: { tabs: { id: T; label: string }[]; current: T; onChange: (id: T) => void }) {
   return (
     <div className="mb-5 flex gap-1 border-b border-line" role="tablist">
@@ -270,9 +250,6 @@ export function Tabs<T extends string>({ tabs, current, onChange }: { tabs: { id
   )
 }
 
-/* ------------------------------------------------------------------ avatar */
-
-/** Round avatar: the person's photo when there is one, otherwise their initials. */
 export function Avatar({ name, photo, size = 'size-8', className }: { name?: string; photo?: string | null; size?: string; className?: string }) {
   const parts = String(name ?? '').trim().split(/\s+/).filter(Boolean)
   const initials = parts.length ? (parts[0][0] + (parts.length > 1 ? parts[parts.length - 1][0] : '')).toUpperCase() : '?'

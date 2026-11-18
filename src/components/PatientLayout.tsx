@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'motion/react'
-import { CalendarDays, FlaskConical, House, KeyRound, LogOut, Pill, Syringe } from 'lucide-react'
+import { CalendarDays, FileText, FlaskConical, House, KeyRound, LogOut, Pill, Syringe } from 'lucide-react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router'
 import { initials } from '../lib/format'
 import { useSession } from '../lib/session'
@@ -12,9 +12,9 @@ const TABS = [
   { to: '/minha-saude/exames', rotulo: 'Exames', icone: FlaskConical },
   { to: '/minha-saude/vacinas', rotulo: 'Vacinas', icone: Syringe },
   { to: '/minha-saude/receitas', rotulo: 'Receitas', icone: Pill },
+  { to: '/minha-saude/documentos', rotulo: 'Documentos', icone: FileText },
 ]
 
-/** Patient area: navigation at the top (bottom bar on phones), without the staff menu. */
 export function PatientLayout() {
   const { user, logout } = useSession()
   const navigate = useNavigate()

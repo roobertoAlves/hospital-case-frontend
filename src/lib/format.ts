@@ -1,5 +1,3 @@
-/** Display formatting (pt-BR). The backend sends ISO dates: "2026-11-16" or "2026-11-16T10:30". */
-
 export type Tone = 'neutral' | 'positive' | 'negative' | 'warning' | 'accent'
 
 const APPOINTMENT: Record<string, [string, Tone]> = {
@@ -75,7 +73,6 @@ export function age(birth: unknown): number | null {
   return a
 }
 
-/** CPF with its middle hidden: ***.456.789-** */
 export function maskedCpf(cpf: unknown): string {
   const d = String(cpf ?? '').replace(/\D/g, '')
   return d.length === 11 ? `***.${d.slice(3, 6)}.${d.slice(6, 9)}-**` : '—'
@@ -93,13 +90,11 @@ export function initials(name: string | undefined): string {
   return ((p[0]?.[0] ?? '?') + (p.length > 1 ? p[p.length - 1][0] : '')).toUpperCase()
 }
 
-/** Exam categories come from the database without accents; this is the display label. */
 const CATEGORIES: Record<string, string> = {
   'Analises clinicas': 'Análises clínicas', Genetica: 'Genética', Respiratorio: 'Respiratório',
 }
 export const categoryLabel = (c: unknown) => CATEGORIES[String(c)] ?? String(c ?? 'Outros')
 
-/** Groups rows by a field, keeping the order in which the groups appear. */
 export function groupBy<T extends Record<string, unknown>>(rows: T[], field: string): [string, T[]][] {
   const groups: [string, T[]][] = []
   for (const l of rows) {

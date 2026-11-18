@@ -3,14 +3,14 @@ import { Alert, PageHeader, Loading, Panel, Badge, Priority, Table, Td, Th, Empt
 import { formatDate, formatDateTime, appointmentStatus, examStatus } from '../lib/format'
 import { useApi } from '../lib/useApi'
 import { HealthBackgroundView } from '../components/HealthBackground'
+import { REFERRAL_STATUS, certificateLabel, examRequestStatus } from '../lib/documents'
 
 type Row = Record<string, unknown>
 interface Data {
   patient: Row; level: 'DOCTOR' | 'NURSING' | 'ADMINISTRATIVE'
-  allergies?: Row[]; background?: Row | null; medical_records?: Row[]; prescriptions?: Row[]; exam_requests?: Row[]; triages?: Row[]; administrative?: Row[]
+  allergies?: Row[]; background?: Row | null; medical_records?: Row[]; prescriptions?: Row[]; exam_requests?: Row[]; certificates?: Row[]; referrals?: Row[]; triages?: Row[]; administrative?: Row[]
 }
 
-/** Medical record sections shown in the history, in the order of the CFM model. */
 const RECORD_SECTIONS: [string, string][] = [
   ['queixa_principal', 'Queixa principal'], ['historia_doenca_atual', 'História da doença atual'],
   ['historico_relevante', 'Antecedentes relatados'], ['revisao_sistemas', 'Revisão por sistemas'], ['exame_fisico', 'Exame físico'],
@@ -19,7 +19,6 @@ const RECORD_SECTIONS: [string, string][] = [
 
 const n = (v: unknown) => (v == null ? '—' : String(v).replace(/\.0+$/, '').replace('.', ','))
 
-/** History filtered by role (decided by the backend: PatientHistoryController.level). */
 export default function PatientHistory() {
   const { id } = useParams()
   const { data, loading, error } = useApi<Data>(`api/patients/${id}/history`)
@@ -86,12 +85,42 @@ export default function PatientHistory() {
               <Panel title="Exames solicitados" delay={0.12}>
                 {!data.exam_requests?.length ? <p className="text-muted">Nenhum exame.</p> : (
                   <ul className="divide-y divide-rule">
-                    {data.exam_requests.map((e, i) => (
+                    {data.exam_requests.map((e, i) => {
+                      const [label, tone] = examRequestStatus(e)
+                      return (
+                        <li key={i} className="py-2.5 first:pt-0">
+                          <p className="flex flex-wrap items-center gap-2 font-medium"><span className="grow">{e.codigo ? <span className="num mr-1.5 text-brand-700">{String(e.codigo)}</span> : null}{String(e.nome_exame)}</span><Badge tone={tone}>{label}</Badge></p>
+                          <p className="text-[12px] text-muted">{formatDate(e.solicitado_em)} · {String(e.medico)}</p>
+                        </li>
+                      )
+                    })}
+                  </ul>
+                )}
+              </Panel>
+              <Panel title="Atestados" delay={0.14}>
+                {!data.certificates?.length ? <p className="text-muted">Nenhum atestado.</p> : (
+                  <ul className="divide-y divide-rule">
+                    {data.certificates.map((a, i) => (
                       <li key={i} className="py-2.5 first:pt-0">
-                        <p className="font-medium">{String(e.nome_exame)}</p>
-                        <p className="text-[12px] text-muted">{formatDate(e.solicitado_em)} · {String(e.medico)}{e.status === 'cancelado' ? ' · cancelado' : ''}</p>
+                        <p className="font-medium">{certificateLabel(a)}{a.status === 'cancelado' ? ' · cancelado' : ''}</p>
+                        <p className="text-[12px] text-muted">{formatDate(a.emitido_em)} · {String(a.medico)}{a.cid10 ? ` · CID ${a.cid10}` : ''}</p>
                       </li>
                     ))}
+                  </ul>
+                )}
+              </Panel>
+              <Panel title="Encaminhamentos" delay={0.16}>
+                {!data.referrals?.length ? <p className="text-muted">Nenhum encaminhamento.</p> : (
+                  <ul className="divide-y divide-rule">
+                    {data.referrals.map((r, i) => {
+                      const [label, tone] = REFERRAL_STATUS[String(r.status)] ?? ['—', 'neutral']
+                      return (
+                        <li key={i} className="py-2.5 first:pt-0">
+                          <p className="flex flex-wrap items-center gap-2 font-medium"><span className="grow">{String(r.especialidade)}</span><Badge tone={tone}>{label}</Badge></p>
+                          <p className="text-[12px] text-muted">{formatDate(r.emitido_em)} · {String(r.medico)} · {String(r.motivo)}</p>
+                        </li>
+                      )
+                    })}
                   </ul>
                 )}
               </Panel>
