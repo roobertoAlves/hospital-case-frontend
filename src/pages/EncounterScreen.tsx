@@ -1,4 +1,4 @@
-import { FileText, Pencil, Plus, Printer, Trash2 } from 'lucide-react'
+import { FileText, Pencil, Plus, Printer, Siren, Trash2 } from 'lucide-react'
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useParams } from 'react-router'
 import { Dialog, ReasonDialog, useNotice } from '../components/notices'
@@ -7,9 +7,15 @@ import { ApiError, post } from '../lib/api'
 import { formatDate, formatDateTime, formatTime, age, appointmentStatus } from '../lib/format'
 import { useApi } from '../lib/useApi'
 import { HealthBackgroundForm, HealthBackgroundSummary } from '../components/HealthBackground'
+import { SearchSelect } from '../components/SearchSelect'
+import { CERTIFICATE_TYPES, REFERRAL_PRIORITY, REFERRAL_STATUS, certificateLabel, examRequestStatus } from '../lib/documents'
+import { categoryLabel, todayIso } from '../lib/format'
 
 type Row = Record<string, unknown>
-interface Data { appointment: Row; triage: Row | null; allergies: Row[]; background: Row | null; progress_notes: Row[]; versions: number; prescriptions: Row[]; exam_requests: Row[]; previous_records: Row[] }
+interface Data { appointment: Row; triage: Row | null; allergies: Row[]; background: Row | null; progress_notes: Row[]; versions: number; prescriptions: Row[]; exam_requests: Row[]; certificates: Row[]; referrals: Row[]; previous_records: Row[] }
+interface Options { exam_catalog: Row[]; specialties: Row[] }
+const EMPTY_EXAM = { id_tipo_exame: '', nome_exame: '', justificativa: '', fora: false }
+const EMPTY_REFERRAL = { id_especialidade: '', prioridade: 'eletivo', motivo: '' }
 
 type Section = 'anamnese' | 'exame' | 'diagnostico' | 'plano'
 const SECTIONS: { id: Section; label: string }[] = [
@@ -56,7 +62,12 @@ export default function EncounterScreen() {
   const [section, setSection] = useState<Section>('anamnese')
   const [allergyOpen, setAllergyOpen] = useState(false)
   const [backgroundOpen, setBackgroundOpen] = useState(false)
-  const [exam, setExam] = useState({ nome_exame: '', codigo: '', justificativa: '' })
+  const [exam, setExam] = useState({ ...EMPTY_EXAM })
+  const [certOpen, setCertOpen] = useState(false)
+  const [cert, setCert] = useState<Record<string, string>>({})
+  const [referralOpen, setReferralOpen] = useState(false)
+  const [referral, setReferral] = useState({ ...EMPTY_REFERRAL })
+  const options = useApi<Options>('api/encounters/options')
   const [allergy, setAllergy] = useState({ substancia: '', reacao: '', gravidade: '' })
   const [cancel, setCancelling] = useState<{ url: string; title: string; help: string } | null>(null)
 
@@ -88,6 +99,19 @@ export default function EncounterScreen() {
   }
 
   const save = (e: FormEvent) => { e.preventDefault(); call('salvar', `api/encounters/${id}/record`, record) }
+  const catalog = (options.data?.exam_catalog ?? []).map((t) => ({
+    value: String(t.id_tipo_exame), label: String(t.nome), code: t.codigo ? String(t.codigo) : undefined,
+    group: categoryLabel(t.categoria), hint: [t.local, Number(t.exige_pedido) ? 'exige pedido' : null].filter(Boolean).join(' · '),
+  }))
+  const chosenExam = (options.data?.exam_catalog ?? []).find((t) => String(t.id_tipo_exame) === exam.id_tipo_exame)
+  const specialtyOptions = (options.data?.specialties ?? []).map((s) => ({ value: String(s.id_especialidade), label: String(s.nome) }))
+  const nowTime = new Date().toTimeString().slice(0, 5)
+  const openCertificate = () => {
+    setErrors({})
+    setCert({ tipo: 'afastamento', data_inicio: todayIso(), dias: '1', hora_inicio: String(c.chegada_em ?? '').slice(11, 16) || nowTime,
+      hora_fim: nowTime, acompanhante_nome: '', cid10: record.cid10 ?? '', cid_autorizado: '', observacoes: '' })
+    setCertOpen(true)
+  }
   const issuePrescription = (e: FormEvent) => {
     e.preventDefault()
     const items = rx.items.filter((i) => i.medicamento.trim()).map((i) => ({
@@ -102,12 +126,19 @@ export default function EncounterScreen() {
       <PageHeader
         breadcrumb={[{ label: 'Fila de atendimento', to: '/atendimento' }, { label: String(c.paciente) }]}
         title={String(c.paciente)}
-        subtitle={<span className="flex flex-wrap items-center gap-2">{years !== null && `${years} anos ·`} {SEX[String(c.sexo)] ?? 'Sexo não informado'} · {String(c.especialidade)} · consulta das {formatTime(c.data_hora)} <Badge tone={statusTone}>{statusLabel}</Badge></span>}
+        subtitle={<span className="flex flex-wrap items-center gap-2">{years !== null && `${years} anos ·`} {SEX[String(c.sexo)] ?? 'Sexo não informado'} · {String(c.especialidade)} · {c.tipo === 'emergencia' ? `chegada às ${formatTime(c.chegada_em ?? c.data_hora)}` : `consulta das ${formatTime(c.data_hora)}`} <Badge tone={statusTone}>{statusLabel}</Badge>{c.tipo === 'emergencia' && <Badge tone="negative">Emergência</Badge>}</span>}
         actions={<>
           <ButtonLink to={`/pacientes/${c.id_paciente}/historico`} icon={FileText}>Histórico</ButtonLink>
           {waiting && <Button variant="primario" loading={busy === 'iniciar'} onClick={() => call('iniciar', `api/encounters/${id}/start`)}>Iniciar atendimento</Button>}
         </>}
       />
+      {c.tipo === 'emergencia' && (
+        <div className="mb-3 flex items-start gap-3 rounded-[var(--radius-card)] border border-red-200 bg-red-50 px-4 py-3 text-[13px] text-red-900">
+          <Siren className="mt-0.5 size-4 shrink-0" />
+          <span><strong>Pronto atendimento.</strong> {String(c.motivo_emergencia ?? '')}
+            {c.medico_original ? ` Consulta original com ${c.medico_original}: o especialista pode ser reagendado depois.` : ''}</span>
+        </div>
+      )}
       <div className="mb-5">
         <Alert tone={data.allergies.length ? 'erro' : 'nota'}>
           <strong>Alergias:</strong>{' '}
@@ -243,26 +274,84 @@ export default function EncounterScreen() {
             )}
           </Panel>
 
-          <Panel title="Exames solicitados" delay={0.12}>
+          <Panel title="Exames solicitados" meta="o paciente vê e agenda pelo portal" delay={0.12}>
             {data.exam_requests.length === 0 && <p className="mb-3 text-muted">Nenhum exame solicitado.</p>}
             <ul className="mb-4 divide-y divide-rule">
-              {data.exam_requests.map((e) => (
-                <li key={String(e.id_exame)} className="flex flex-wrap items-center gap-2 py-2.5">
-                  <span className="grow"><span className="block font-medium">{String(e.nome_exame)}{e.codigo ? ` · ${e.codigo}` : ''}</span>
-                    <span className="block text-[12px] text-muted">{formatDateTime(e.solicitado_em)}{e.justificativa ? ` · ${e.justificativa}` : ''}</span></span>
-                  {e.status === 'cancelado' ? <Badge tone="negative">Cancelado</Badge>
-                    : <Button small variant="perigoTexto" onClick={() => setCancelling({ url: `api/exam-requests/${e.id_exame}/cancel`, title: `Cancelar o pedido de ${e.nome_exame}`, help: 'O pedido cancelado continua no histórico.' })}>Cancelar</Button>}
-                </li>
-              ))}
+              {data.exam_requests.map((e) => {
+                const [label, tone] = examRequestStatus(e)
+                return (
+                  <li key={String(e.id_exame)} className="flex flex-wrap items-center gap-2 py-2.5">
+                    <span className="grow"><span className="block font-medium">{e.codigo ? <span className="num mr-1.5 text-brand-700">{String(e.codigo)}</span> : null}{String(e.nome_exame)}</span>
+                      <span className="block text-[12px] text-muted">{formatDateTime(e.solicitado_em)}{e.justificativa ? ` · ${e.justificativa}` : ''}</span></span>
+                    <Badge tone={tone}>{label}</Badge>
+                    {e.status !== 'cancelado' && !e.agendado_para && <Button small variant="perigoTexto" onClick={() => setCancelling({ url: `api/exam-requests/${e.id_exame}/cancel`, title: `Cancelar o pedido de ${e.nome_exame}`, help: 'O pedido cancelado continua no histórico.' })}>Cancelar</Button>}
+                  </li>
+                )
+              })}
             </ul>
             {canPrescribe && (
-              <form className="grid gap-3 rounded-[var(--radius-card)] bg-raised p-4 sm:grid-cols-6" noValidate
-                onSubmit={(ev) => { ev.preventDefault(); call('exam', `api/encounters/${id}/exam-requests`, exam, () => setExam({ nome_exame: '', codigo: '', justificativa: '' })) }}>
-                <Field label="Exame" name="nome_exame" required error={errors.nome_exame} className="sm:col-span-4"><Input name="nome_exame" maxLength={200} value={exam.nome_exame} onChange={(e) => setExam({ ...exam, nome_exame: e.target.value })} /></Field>
-                <Field label="Código" name="codigo" help="Opcional (ex.: TUSS)" className="sm:col-span-2"><Input name="codigo" maxLength={20} value={exam.codigo} onChange={(e) => setExam({ ...exam, codigo: e.target.value })} /></Field>
-                <Field label="Justificativa" name="justificativa" className="sm:col-span-6"><Input name="justificativa" maxLength={500} value={exam.justificativa} onChange={(e) => setExam({ ...exam, justificativa: e.target.value })} /></Field>
-                <div className="flex justify-end sm:col-span-6"><Button type="submit" loading={busy === 'exam'}>Solicitar exame</Button></div>
+              <form className="grid gap-3 rounded-[var(--radius-card)] bg-raised p-4" noValidate
+                onSubmit={(ev) => {
+                  ev.preventDefault()
+                  const body = exam.fora ? { nome_exame: exam.nome_exame, justificativa: exam.justificativa } : { id_tipo_exame: exam.id_tipo_exame, justificativa: exam.justificativa }
+                  call('exam', `api/encounters/${id}/exam-requests`, body, () => setExam({ ...EMPTY_EXAM }))
+                }}>
+                {exam.fora ? (
+                  <Field label="Exame fora do catálogo" name="nome_exame" required help="Use só quando o exame não existe no catálogo da clínica.">
+                    <Input name="nome_exame" maxLength={200} value={exam.nome_exame} onChange={(e) => setExam({ ...exam, nome_exame: e.target.value })} />
+                  </Field>
+                ) : (
+                  <Field label="Exame" name="id_tipo_exame" required help={chosenExam ? [chosenExam.local, chosenExam.preparo ? `Preparo: ${chosenExam.preparo}` : null].filter(Boolean).join(' · ') : 'Busque pelo nome ou pelo código (ex.: LAB-001, hemograma).'}>
+                    <SearchSelect name="id_tipo_exame" options={catalog} value={exam.id_tipo_exame} placeholder="Nome ou código do exame"
+                      onChange={(v) => setExam({ ...exam, id_tipo_exame: v })} emptyText="Nenhum exame com esse nome ou código." />
+                  </Field>
+                )}
+                <Field label="Justificativa clínica" name="justificativa"><Input name="justificativa" maxLength={500} value={exam.justificativa} onChange={(e) => setExam({ ...exam, justificativa: e.target.value })} /></Field>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <button type="button" className="text-[12px] text-brand-700 hover:underline" onClick={() => setExam({ ...EMPTY_EXAM, fora: !exam.fora })}>
+                    {exam.fora ? 'Voltar ao catálogo de exames' : 'O exame não está no catálogo?'}
+                  </button>
+                  <Button type="submit" loading={busy === 'exam'} disabled={exam.fora ? exam.nome_exame.trim().length < 3 : !exam.id_tipo_exame}>Solicitar exame</Button>
+                </div>
               </form>
+            )}
+          </Panel>
+
+          <Panel title="Atestados" meta="emitido não muda; só pode ser cancelado" delay={0.13}
+            actions={canPrescribe ? <Button small variant="texto" icon={Plus} onClick={openCertificate}>Emitir atestado</Button> : undefined}>
+            {data.certificates.length === 0 ? <p className="text-muted">Nenhum atestado nesta consulta.</p> : (
+              <ul className="divide-y divide-rule">
+                {data.certificates.map((a) => (
+                  <li key={String(a.id_atestado)} className="flex flex-wrap items-center gap-2 py-2.5">
+                    <span className="grow"><span className="block font-medium">{certificateLabel(a)}</span>
+                      <span className="block text-[12px] text-muted">Emitido {formatDateTime(a.emitido_em)}{a.cid10 ? ` · CID ${a.cid10}` : ''}</span></span>
+                    {a.status === 'cancelado' ? <Badge tone="negative">Cancelado</Badge> : <>
+                      <ButtonLink to={`/atestados/${a.id_atestado}`} small icon={Printer}>Imprimir</ButtonLink>
+                      <Button small variant="perigoTexto" onClick={() => setCancelling({ url: `api/certificates/${a.id_atestado}/cancel`, title: 'Cancelar o atestado', help: 'O atestado cancelado continua no histórico, marcado como cancelado.' })}>Cancelar</Button>
+                    </>}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Panel>
+
+          <Panel title="Encaminhamentos" meta="o paciente agenda a especialidade" delay={0.14}
+            actions={canPrescribe ? <Button small variant="texto" icon={Plus} onClick={() => { setErrors({}); setReferral({ ...EMPTY_REFERRAL }); setReferralOpen(true) }}>Encaminhar</Button> : undefined}>
+            {data.referrals.length === 0 ? <p className="text-muted">Nenhum encaminhamento nesta consulta.</p> : (
+              <ul className="divide-y divide-rule">
+                {data.referrals.map((r) => {
+                  const [pLabel, pTone] = REFERRAL_PRIORITY[String(r.prioridade)] ?? ['—', 'neutral']
+                  const [sLabel, sTone] = REFERRAL_STATUS[String(r.status)] ?? ['—', 'neutral']
+                  return (
+                    <li key={String(r.id_encaminhamento)} className="flex flex-wrap items-center gap-2 py-2.5">
+                      <span className="grow"><span className="block font-medium">{String(r.especialidade)}</span>
+                        <span className="block text-[12px] text-muted">{String(r.motivo)}</span></span>
+                      <Badge tone={pTone}>{pLabel}</Badge><Badge tone={sTone}>{sLabel}</Badge>
+                      {r.status === 'emitido' && <Button small variant="perigoTexto" onClick={() => setCancelling({ url: `api/referrals/${r.id_encaminhamento}/cancel`, title: `Cancelar o encaminhamento para ${r.especialidade}`, help: 'O encaminhamento cancelado continua no histórico.' })}>Cancelar</Button>}
+                    </li>
+                  )
+                })}
+              </ul>
             )}
           </Panel>
         </div>
@@ -344,6 +433,78 @@ export default function EncounterScreen() {
         </div>
       </div>
 
+      <Dialog open={certOpen} onClose={() => setCertOpen(false)} title="Emitir atestado" width="max-w-xl">
+        <form className="grid gap-4" noValidate onSubmit={(ev) => { ev.preventDefault(); call('cert', `api/encounters/${id}/certificates`, cert, () => setCertOpen(false)) }}>
+          <fieldset>
+            <legend className="mb-2 text-[13px] font-medium">Tipo de atestado</legend>
+            <div className="grid gap-2 sm:grid-cols-3">
+              {CERTIFICATE_TYPES.map(([v, label, help]) => (
+                <label key={v} className={`cursor-pointer rounded-[var(--radius-card)] border px-3 py-2.5 ${cert.tipo === v ? 'border-brand-600 bg-brand-50' : 'border-line hover:bg-raised'}`}>
+                  <input type="radio" name="tipo" value={v} checked={cert.tipo === v} onChange={() => setCert({ ...cert, tipo: v })} className="sr-only" />
+                  <span className="block font-medium">{label}</span><span className="block text-[12px] text-muted">{help}</span>
+                </label>
+              ))}
+            </div>
+            {errors.tipo && <p className="mt-1 text-[12px] text-negative">{errors.tipo}</p>}
+          </fieldset>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <Field label={cert.tipo === 'afastamento' ? 'A partir de' : 'Data'} name="data_inicio" error={errors.data_inicio}>
+              <Input type="date" name="data_inicio" value={cert.data_inicio ?? ''} onChange={(e) => setCert({ ...cert, data_inicio: e.target.value })} />
+            </Field>
+            {cert.tipo === 'afastamento' ? (
+              <Field label="Dias de afastamento" name="dias" required error={errors.dias}>
+                <Input type="number" min={1} max={90} name="dias" value={cert.dias ?? ''} onChange={(e) => setCert({ ...cert, dias: e.target.value })} />
+              </Field>
+            ) : (<>
+              <Field label="Chegada" name="hora_inicio" required error={errors.hora_inicio}>
+                <Input type="time" name="hora_inicio" value={cert.hora_inicio ?? ''} onChange={(e) => setCert({ ...cert, hora_inicio: e.target.value })} />
+              </Field>
+              <Field label="Saída" name="hora_fim" required error={errors.hora_fim}>
+                <Input type="time" name="hora_fim" value={cert.hora_fim ?? ''} onChange={(e) => setCert({ ...cert, hora_fim: e.target.value })} />
+              </Field>
+            </>)}
+          </div>
+          {cert.tipo === 'acompanhante' && (
+            <Field label="Nome do acompanhante" name="acompanhante_nome" required error={errors.acompanhante_nome}>
+              <Input name="acompanhante_nome" maxLength={150} value={cert.acompanhante_nome ?? ''} onChange={(e) => setCert({ ...cert, acompanhante_nome: e.target.value })} />
+            </Field>
+          )}
+          <div className="grid gap-3 sm:grid-cols-[160px_1fr] sm:items-end">
+            <Field label="CID-10" name="cid10" help="Opcional" error={errors.cid10}>
+              <Input name="cid10" maxLength={10} value={cert.cid10 ?? ''} onChange={(e) => setCert({ ...cert, cid10: e.target.value.toUpperCase() })} />
+            </Field>
+            <label className="flex items-start gap-2 pb-2 text-[13px]">
+              <input type="checkbox" className="mt-0.5" checked={cert.cid_autorizado === '1'} disabled={!cert.cid10} onChange={(e) => setCert({ ...cert, cid_autorizado: e.target.checked ? '1' : '' })} />
+              <span>O paciente autorizou o CID no atestado{errors.cid_autorizado && <span className="block text-[12px] text-negative">{errors.cid_autorizado}</span>}</span>
+            </label>
+          </div>
+          <Field label="Observações" name="observacoes"><TextArea name="observacoes" rows={2} maxLength={500} value={cert.observacoes ?? ''} onChange={(e) => setCert({ ...cert, observacoes: e.target.value })} /></Field>
+          <div className="flex justify-end gap-2">
+            <Button type="button" onClick={() => setCertOpen(false)}>Voltar</Button>
+            <Button type="submit" variant="primario" loading={busy === 'cert'}>Emitir atestado</Button>
+          </div>
+        </form>
+      </Dialog>
+      <Dialog open={referralOpen} onClose={() => setReferralOpen(false)} title="Encaminhar para especialidade">
+        <form className="grid gap-4" noValidate onSubmit={(ev) => { ev.preventDefault(); call('ref', `api/encounters/${id}/referrals`, referral, () => setReferralOpen(false)) }}>
+          <Field label="Especialidade" name="id_especialidade" required error={errors.id_especialidade}>
+            <SearchSelect name="id_especialidade" options={specialtyOptions} value={referral.id_especialidade} placeholder="Busque a especialidade"
+              onChange={(v) => setReferral({ ...referral, id_especialidade: v })} />
+          </Field>
+          <Field label="Prioridade" name="prioridade" error={errors.prioridade}>
+            <Select name="prioridade" value={referral.prioridade} onChange={(e) => setReferral({ ...referral, prioridade: e.target.value })}>
+              {Object.entries(REFERRAL_PRIORITY).map(([v, [label]]) => <option key={v} value={v}>{label}</option>)}
+            </Select>
+          </Field>
+          <Field label="Motivo e informações para o especialista" name="motivo" required error={errors.motivo}>
+            <TextArea name="motivo" rows={3} maxLength={500} value={referral.motivo} onChange={(e) => setReferral({ ...referral, motivo: e.target.value })} />
+          </Field>
+          <div className="flex justify-end gap-2">
+            <Button type="button" onClick={() => setReferralOpen(false)}>Voltar</Button>
+            <Button type="submit" variant="primario" loading={busy === 'ref'}>Encaminhar</Button>
+          </div>
+        </form>
+      </Dialog>
       <Dialog open={confirmFinish} onClose={() => setConfirmFinish(false)} title="Finalizar atendimento?">
         <p className="text-muted">Depois de finalizado, o prontuário não pode mais ser alterado; só aceita adendos. A consulta fica como realizada.</p>
         <div className="mt-5 flex justify-end gap-2">

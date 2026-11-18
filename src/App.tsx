@@ -22,6 +22,9 @@ const TriageForm = lazy(() => import('./pages/TriageForm'))
 const EncounterQueue = lazy(() => import('./pages/EncounterQueue'))
 const EncounterScreen = lazy(() => import('./pages/EncounterScreen'))
 const PrescriptionPrint = lazy(() => import('./pages/PrescriptionPrint'))
+const CertificatePrint = lazy(() => import('./pages/CertificatePrint'))
+const EmergencyForm = lazy(() => import('./pages/EmergencyForm'))
+const ExamCatalog = lazy(() => import('./pages/ExamCatalog'))
 const Professionals = lazy(() => import('./pages/Professionals'))
 const ProfessionalForm = lazy(() => import('./pages/ProfessionalForm'))
 const Specialties = lazy(() => import('./pages/Specialties'))
@@ -40,6 +43,7 @@ const MyAppointments = lazy(() => import('./pages/patient/MyAppointments'))
 const MyExams = lazy(() => import('./pages/patient/MyExams'))
 const MyVaccines = lazy(() => import('./pages/patient/MyVaccines'))
 const MyPrescriptions = lazy(() => import('./pages/patient/MyPrescriptions'))
+const MyDocuments = lazy(() => import('./pages/patient/MyDocuments'))
 
 export const isPatient = (u: User | null) => !!u && u.groups.includes('paciente')
 
@@ -87,9 +91,11 @@ const router = createBrowserRouter([
       { path: 'exames', element: page(<MyExams />) },
       { path: 'vacinas', element: page(<MyVaccines />) },
       { path: 'receitas', element: page(<MyPrescriptions />) },
+      { path: 'documentos', element: page(<MyDocuments />) },
     ],
   },
   { path: '/minha-saude/receitas/:id', element: <PatientOnly>{page(<PrescriptionPrint portal />)}</PatientOnly> },
+  { path: '/minha-saude/atestados/:id', element: <PatientOnly>{page(<CertificatePrint portal />)}</PatientOnly> },
   {
     element: <Protected><Layout /></Protected>,
     children: [
@@ -104,6 +110,8 @@ const router = createBrowserRouter([
       { path: 'agenda/:id/remarcar', element: page(<AppointmentForm />) },
       { path: 'exames', element: page(<Exams />) },
       { path: 'exames/novo', element: page(<ExamForm />) },
+      { path: 'emergencia', element: page(<EmergencyForm />) },
+      { path: 'catalogo-exames', element: page(<ExamCatalog />) },
       { path: 'pedidos', element: page(<MedicalOrders />) },
       { path: 'vacinas', element: page(<VaccinationRoom />) },
       { path: 'triagem', element: page(<TriageQueue />) },
@@ -123,6 +131,7 @@ const router = createBrowserRouter([
     ],
   },
   { path: '/receitas/:id', element: <Protected>{page(<PrescriptionPrint />)}</Protected> },
+  { path: '/atestados/:id', element: <Protected>{page(<CertificatePrint />)}</Protected> },
 ])
 
 export default function App() {

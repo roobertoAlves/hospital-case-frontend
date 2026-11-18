@@ -1,5 +1,8 @@
 import { CalendarPlus, CheckCircle2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router'
+import { SearchSelect } from '../../components/SearchSelect'
+import { REFERRAL_PRIORITY } from '../../lib/documents'
 import { Dialog, ReasonDialog, useNotice } from '../../components/notices'
 import { SlotGrid, type Slot } from '../../components/booking'
 import { Button, PageHeader, Field, Loading, Input, Panel, Badge, Select, Empty } from '../../components/ui'
@@ -9,10 +12,10 @@ import { useApi } from '../../lib/useApi'
 
 type Row = Record<string, unknown>
 
-function Scheduler({ specialties, today, fixed, onConfirm, buttonLabel }: {
-  specialties: Row[]; today: string; fixed?: { specialty: string; doctor: string }; onConfirm: (v: { specialty: string; doctor: string; date: string; time: string }) => Promise<void>; buttonLabel: string
+function Scheduler({ specialties, today, fixed, initial, onConfirm, buttonLabel }: {
+  specialties: Row[]; today: string; fixed?: { specialty: string; doctor: string }; initial?: string; onConfirm: (v: { specialty: string; doctor: string; date: string; time: string }) => Promise<void>; buttonLabel: string
 }) {
-  const [specialty, setSpecialty] = useState(fixed?.specialty ?? '')
+  const [specialty, setSpecialty] = useState(fixed?.specialty ?? initial ?? '')
   const [doctors, setDoctors] = useState<Row[] | null>(null)
   const [doctor, setDoctor] = useState(fixed?.doctor ?? '')
   const [day, setDay] = useState(today)
@@ -23,7 +26,10 @@ function Scheduler({ specialties, today, fixed, onConfirm, buttonLabel }: {
 
   useEffect(() => {
     if (!specialty) { setDoctors(null); return }
-    get<Row[]>('api/appointments/doctors', { specialty: specialty }).then((r) => setDoctors(r.data)).catch(() => setDoctors([]))
+    get<Row[]>('api/appointments/doctors', { specialty: specialty }).then((r) => {
+      setDoctors(r.data)
+      if (!fixed && r.data.length === 1) setDoctor(String(r.data[0].id_profissional))
+    }).catch(() => setDoctors([]))
   }, [specialty])
   useEffect(() => {
     setH('')
@@ -36,10 +42,9 @@ function Scheduler({ specialties, today, fixed, onConfirm, buttonLabel }: {
     <div className="grid gap-4">
       <div className="grid gap-3 sm:grid-cols-3">
         <Field label="Especialidade" name="espP">
-          <Select name="espP" value={specialty} disabled={!!fixed} onChange={(e) => { setSpecialty(e.target.value); setDoctor('') }}>
-            <option value="">Escolha…</option>
-            {specialties.map((e) => <option key={String(e.id_especialidade)} value={String(e.id_especialidade)}>{String(e.nome)}</option>)}
-          </Select>
+          <SearchSelect name="espP" value={specialty} disabled={!!fixed} placeholder="Busque a especialidade"
+            options={specialties.map((e) => ({ value: String(e.id_especialidade), label: String(e.nome) }))}
+            onChange={(v) => { setSpecialty(v); setDoctor('') }} />
         </Field>
         <Field label="Médico" name="medP">
           <Select name="medP" value={doctor} disabled={!doctors} onChange={(e) => setDoctor(e.target.value)}>
@@ -59,8 +64,10 @@ function Scheduler({ specialties, today, fixed, onConfirm, buttonLabel }: {
 
 export default function MyAppointments() {
   const notify = useNotice()
-  const { data, loading, error, reload } = useApi<{ appointments: Row[]; specialties: Row[]; today: string }>('api/portal/appointments')
-  const [mark, setMark] = useState(false)
+  const { data, loading, error, reload } = useApi<{ appointments: Row[]; specialties: Row[]; today: string; open_referrals: Row[] }>('api/portal/appointments')
+  const [params] = useSearchParams()
+  const [preset, setPreset] = useState(params.get('especialidade') ?? '')
+  const [mark, setMark] = useState(!!params.get('especialidade'))
   const [reschedule, setRescheduling] = useState<Row | null>(null)
   const [cancel, setCancelling] = useState<Row | null>(null)
 
@@ -79,9 +86,25 @@ export default function MyAppointments() {
   return (
     <>
       <PageHeader title="Minhas consultas" subtitle="Marque, confirme a presença, remarque ou cancele." actions={<Button variant="primario" icon={CalendarPlus} onClick={() => setMark((m) => !m)}>Marcar consulta</Button>} />
+      {data.open_referrals?.length > 0 && !mark && (
+        <Panel title="Encaminhamentos para agendar" className="mb-5">
+          <div className="flex flex-wrap gap-2">
+            {data.open_referrals.map((r) => {
+              const [label, tone] = REFERRAL_PRIORITY[String(r.prioridade)] ?? ['—', 'neutral']
+              return (
+                <button key={String(r.id_encaminhamento)} type="button" onClick={() => { setPreset(String(r.id_especialidade)); setMark(true) }}
+                  className="rounded-[var(--radius-card)] border border-line px-3 py-2 text-left hover:border-brand-600 hover:bg-brand-50">
+                  <span className="flex items-center gap-2 font-medium">{String(r.especialidade)} <Badge tone={tone}>{label}</Badge></span>
+                  <span className="block text-[12px] text-muted">Pedido por {String(r.medico)} · toque para agendar</span>
+                </button>
+              )
+            })}
+          </div>
+        </Panel>
+      )}
       {mark && (
         <Panel title="Marcar consulta" className="mb-5">
-          <Scheduler specialties={data.specialties} today={data.today} buttonLabel="Confirmar consulta"
+          <Scheduler key={preset} specialties={data.specialties} today={data.today} initial={preset} buttonLabel="Confirmar consulta"
             onConfirm={async (v) => { if (await call('api/portal/appointments', { id_especialidade: v.specialty, id_medico: v.doctor, date: v.date, time: v.time })) setMark(false) }} />
         </Panel>
       )}

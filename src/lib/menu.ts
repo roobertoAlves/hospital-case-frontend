@@ -1,6 +1,6 @@
 import {
   CalendarDays, CalendarPlus, FileCheck, Syringe, ClipboardList, FileText, FlaskConical, HeartPulse, House, IdCard, KeyRound, ListChecks,
-  LifeBuoy, Search, ShieldCheck, Stethoscope, UserCircle, UserPlus, Users, UsersRound, type LucideIcon,
+  LifeBuoy, Search, ShieldCheck, Siren, Stethoscope, TestTubes, UserCircle, UserPlus, Users, UsersRound, type LucideIcon,
 } from 'lucide-react'
 
 export interface ItemMenu {
@@ -13,6 +13,7 @@ export const HOSPITAL_GROUPS = ['admin', 'recepcionista', 'enfermeiro', 'medico'
 
 export const MENU: ItemMenu[] = [
   { section: '', label: 'Início', to: '/painel', permission: null, icon: House, groups: HOSPITAL_GROUPS, strict: true },
+  { section: 'Cadastro e agenda', label: 'Emergência', to: '/emergencia', permission: 'emergencia.registrar', icon: Siren },
   { section: 'Cadastro e agenda', label: 'Pacientes', to: '/pacientes', permission: 'pacientes.view', icon: Users },
   { section: 'Cadastro e agenda', label: 'Agenda de consultas', to: '/agenda', permission: 'agenda.view', icon: CalendarDays },
   { section: 'Cadastro e agenda', label: 'Agenda de exames', to: '/exames', permission: 'exames.agenda.view', icon: FlaskConical },
@@ -24,6 +25,7 @@ export const MENU: ItemMenu[] = [
   { section: 'Administração', label: 'Usuários e permissões', to: '/admin', permission: 'usuarios.view', icon: ShieldCheck, groups: ['admin'] },
   { section: 'Administração', label: 'Profissionais', to: '/profissionais', permission: 'profissionais.manage', icon: IdCard },
   { section: 'Administração', label: 'Especialidades', to: '/especialidades', permission: 'especialidades.manage', icon: ListChecks },
+  { section: 'Administração', label: 'Catálogo de exames', to: '/catalogo-exames', permission: 'exames.catalogo.manage', icon: TestTubes },
   { section: 'Administração', label: 'Auditoria', to: '/auditoria', permission: 'auditoria.view', icon: FileText },
   { section: 'Conta', label: 'Equipe', to: '/equipe', permission: null, icon: UsersRound, groups: ['gerente'], strict: true },
   { section: 'Conta', label: 'Chamados de suporte', to: '/chamados', permission: null, icon: LifeBuoy },
@@ -31,6 +33,7 @@ export const MENU: ItemMenu[] = [
 ]
 
 export const SHORTCUTS: ItemMenu[] = [
+  { section: '', label: 'Emergência', to: '/emergencia', permission: 'emergencia.registrar', icon: Siren },
   { section: '', label: 'Cadastrar paciente', to: '/pacientes/novo', permission: 'pacientes.create', icon: UserPlus },
   { section: '', label: 'Buscar paciente', to: '/pacientes', permission: 'pacientes.view', icon: Search },
   { section: '', label: 'Agendar consulta', to: '/agenda/nova', permission: 'consultas.agendar', icon: CalendarPlus },
@@ -42,6 +45,7 @@ export const SHORTCUTS: ItemMenu[] = [
   { section: '', label: 'Fila de atendimento', to: '/atendimento', permission: 'atendimento.fila', icon: Stethoscope, groups: ['medico'], strict: true },
   { section: '', label: 'Usuários e permissões', to: '/admin', permission: 'usuarios.view', icon: ShieldCheck, groups: ['admin'] },
   { section: '', label: 'Profissionais', to: '/profissionais', permission: 'profissionais.manage', icon: IdCard },
+  { section: '', label: 'Catálogo de exames', to: '/catalogo-exames', permission: 'exames.catalogo.manage', icon: TestTubes },
   { section: '', label: 'Auditoria', to: '/auditoria', permission: 'auditoria.view', icon: FileText },
   { section: '', label: 'Meu perfil', to: '/perfil', permission: null, icon: KeyRound },
 ]

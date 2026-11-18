@@ -11,7 +11,7 @@ type Row = Record<string, unknown>
 interface Data { appointment: Row; triage: Row | null; can_record: boolean; can_amend: boolean; classifications: Row[]; allergies: Row[] }
 
 const FIELDS = ['pa_sistolica', 'pa_diastolica', 'frequencia_cardiaca', 'temperatura', 'saturacao_o2', 'peso_kg', 'altura_cm',
-  'queixa_principal', 'sintomas', 'observacoes', 'id_classificacao', 'motivo_retificacao'] as const
+  'queixa_principal', 'sintomas', 'observacoes', 'id_classificacao', 'motivo_retificacao', 'encaminhar_emergencia'] as const
 type Values = Record<(typeof FIELDS)[number], string>
 const empty = Object.fromEntries(FIELDS.map((c) => [c, ''])) as Values
 
@@ -110,6 +110,18 @@ export default function TriageForm() {
             })}
           </div>
           {f.errors.id_classificacao && <p className="text-[12px] text-negative sm:col-span-6">{f.errors.id_classificacao}</p>}
+          {editable && (() => {
+            const chosen = data.classifications.find((p) => String(p.id_classificacao) === f.values.id_classificacao)
+            const critical = !!chosen && Number(chosen.ordem) <= 2
+            if (c.tipo === 'emergencia') return <p className="rounded-[var(--radius-card)] border border-red-200 bg-red-50 px-3 py-2 text-[13px] text-red-900 sm:col-span-6"><strong>Entrada pela emergência:</strong> {String(c.motivo_emergencia ?? '')}. Depois da triagem, vai para o médico plantonista.</p>
+            if (critical) return <p className="rounded-[var(--radius-card)] border border-red-200 bg-red-50 px-3 py-2 text-[13px] text-red-900 sm:col-span-6"><strong>{String(chosen!.nome)}:</strong> o paciente sai da agenda de {String(c.medico)} e vai direto para o médico plantonista do pronto atendimento.</p>
+            return (
+              <label className="flex items-start gap-2 rounded-[var(--radius-card)] border border-line px-3 py-2 text-[13px] sm:col-span-6">
+                <input type="checkbox" className="mt-0.5" checked={f.values.encaminhar_emergencia === '1'} onChange={(e) => f.change('encaminhar_emergencia', e.target.checked ? '1' : '')} />
+                <span><strong>Paciente passando mal:</strong> encaminhar ao pronto atendimento (médico plantonista) em vez de aguardar {String(c.medico)}.</span>
+              </label>
+            )
+          })()}
         </FormSection>
         {t && data.can_amend && (
           <FormSection title="Retificação" description="Obrigatório para corrigir uma triagem já registrada.">

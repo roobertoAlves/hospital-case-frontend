@@ -27,9 +27,10 @@ export default function EncounterQueue() {
               const inEncounter = c.status === 'em_atendimento'
               return (
                 <tr key={String(c.id_consulta)} className="cursor-pointer" onClick={() => navigate(`/atendimento/${c.id_consulta}`)}>
-                  <Td><Priority color={c.cor_hex} name={c.prioridade} /></Td>
-                  <Td><Main sub={`${years !== null ? `${years} anos · ` : ''}${c.especialidade}`}>{String(c.paciente)}</Main></Td>
-                  <Td className="hidden max-w-[320px] truncate text-muted lg:table-cell">{String(c.queixa_principal ?? '')}</Td>
+                  <Td>{c.prioridade ? <Priority color={c.cor_hex} name={c.prioridade} /> : <span className="text-faint">—</span>}</Td>
+                  <Td><Main sub={`${years !== null ? `${years} anos · ` : ''}${c.especialidade}${c.medico_original ? ` · tirado da agenda de ${c.medico_original}` : ''}`}>
+                    <span className="inline-flex flex-wrap items-center gap-2">{String(c.paciente)}{c.tipo === 'emergencia' && <Badge tone="negative">Emergência</Badge>}</span></Main></Td>
+                  <Td className="hidden max-w-[320px] truncate text-muted lg:table-cell">{String(c.queixa_principal ?? c.motivo_emergencia ?? '')}</Td>
                   <Td className="num hidden md:table-cell">{formatTime(c.chegada_em)}</Td>
                   <Td><Badge tone={tone}>{label}</Badge></Td>
                   <Td className="text-right"><Button small variant={inEncounter ? 'secundario' : 'primario'}>{inEncounter ? 'Continuar' : 'Chamar e atender'}</Button></Td>
