@@ -7,7 +7,7 @@ import { ApiError, post } from '../lib/api'
 import { formatDate, formatDateTime, formatTime, age, appointmentStatus } from '../lib/format'
 import { useApi } from '../lib/useApi'
 import { HealthBackgroundForm, HealthBackgroundSummary } from '../components/HealthBackground'
-import { SearchSelect } from '../components/SearchSelect'
+import { SearchSelect, SuggestInput } from '../components/SearchSelect'
 import { CERTIFICATE_TYPES, REFERRAL_PRIORITY, REFERRAL_STATUS, certificateLabel, examRequestStatus } from '../lib/documents'
 import { categoryLabel, todayIso } from '../lib/format'
 
@@ -221,7 +221,6 @@ export default function EncounterScreen() {
             {canPrescribe && (
               <form onSubmit={issuePrescription} className="rounded-[var(--radius-card)] bg-raised p-4" noValidate>
                 <p className="mb-3 font-medium">Nova receita</p>
-                <datalist id="frequencias">{FREQUENCIES.map((f) => <option key={f} value={f} />)}</datalist>
                 <div className="space-y-3">
                   {rx.items.map((it, k) => {
                     const set = (field: keyof Item, value: string) => setRx({ ...rx, items: rx.items.map((x, j) => (j === k ? { ...x, [field]: value } : x)) })
@@ -251,7 +250,7 @@ export default function EncounterScreen() {
                             </Select>
                           </Field>
                           <Field label="Frequência" name={`freq${k}`} className="sm:col-span-3">
-                            <Input name={`freq${k}`} list="frequencias" maxLength={100} placeholder="Ex.: De 8 em 8 horas" value={it.frequencia} onChange={(e) => set('frequencia', e.target.value)} />
+                            <SuggestInput name={`freq${k}`} maxLength={100} placeholder="Ex.: De 8 em 8 horas" suggestions={FREQUENCIES} value={it.frequencia} onChange={(v) => set('frequencia', v)} />
                           </Field>
                           <Field label="Duração" name={`dur${k}`} className="sm:col-span-3">
                             <Input name={`dur${k}`} maxLength={100} placeholder="Ex.: 7 dias, uso contínuo" value={it.duracao} onChange={(e) => set('duracao', e.target.value)} />
