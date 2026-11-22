@@ -41,6 +41,42 @@ function normalize(body: Record<string, unknown>): Record<string, unknown> {
   return out
 }
 
+const WAKE_STATUS = [502, 503, 504]
+const WAKE_LIMIT_MS = 120_000
+let waking = 0
+const wakeListeners = new Set<(on: boolean) => void>()
+export function onWaking(fn: (on: boolean) => void) {
+  wakeListeners.add(fn)
+  return () => { wakeListeners.delete(fn) }
+}
+function setWaking(delta: number) {
+  const before = waking > 0
+  waking = Math.max(0, waking + delta)
+  if (before !== waking > 0) wakeListeners.forEach((fn) => fn(waking > 0))
+}
+
+async function fetchWaking(url: string, init: RequestInit, retryOn: number[]): Promise<Response> {
+  const started = Date.now()
+  let wait = 2000
+  let flagged = false
+  try {
+    for (;;) {
+      let r: Response | null = null
+      try { r = await fetch(url, init) } catch { r = null }
+      if (r && !retryOn.includes(r.status)) return r
+      if (Date.now() - started > WAKE_LIMIT_MS) {
+        if (r) return r
+        throw new TypeError('network')
+      }
+      if (!flagged) { flagged = true; setWaking(1) }
+      await new Promise((ok) => setTimeout(ok, wait))
+      wait = Math.min(wait + 1500, 6000)
+    }
+  } finally {
+    if (flagged) setWaking(-1)
+  }
+}
+
 async function request<T>(method: 'GET' | 'POST', path: string, body?: Record<string, unknown>): Promise<ApiResponse<T>> {
   const headers: Record<string, string> = { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
   if (method === 'POST') {
@@ -49,12 +85,12 @@ async function request<T>(method: 'GET' | 'POST', path: string, body?: Record<st
   }
   let r: Response
   try {
-    r = await fetch(`${API_BASE}/${path.replace(/^\/+/, '')}`, {
+    r = await fetchWaking(`${API_BASE}/${path.replace(/^\/+/, '')}`, {
       method: method,
       headers,
       credentials: 'include',
       body: method === 'POST' ? JSON.stringify(normalize(body ?? {})) : undefined,
-    })
+    }, method === 'GET' ? WAKE_STATUS : [502, 503])
   } catch {
     throw new ApiError(0, 'ERR_REDE', 'Sem conexão com o servidor. Confira se o backend está no ar.')
   }
@@ -62,7 +98,9 @@ async function request<T>(method: 'GET' | 'POST', path: string, body?: Record<st
   try {
     json = await r.json()
   } catch {
-    throw new ApiError(r.status, 'ERR_RESPOSTA', `Resposta inesperada do servidor (HTTP ${r.status}).`)
+    throw new ApiError(r.status, 'ERR_RESPOSTA', WAKE_STATUS.includes(r.status)
+      ? 'O servidor demorou para responder. Tente de novo em alguns segundos.'
+      : `Resposta inesperada do servidor (HTTP ${r.status}).`)
   }
   if (!r.ok || json.status === false) {
     const error = new ApiError(r.status, json.error ?? 'ERR', json.message ?? 'Não foi possível concluir.', json.details)
