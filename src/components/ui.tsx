@@ -126,7 +126,7 @@ export function Kpi({ label, value, note, highlight, delay = 0 }: { label: strin
 }
 
 const TONE: Record<Tone, string> = {
-  neutral: 'bg-[#ebeeed] text-[#353a39]',
+  neutral: 'bg-[#eceff4] text-[#353b48]',
   positive: 'bg-[#dcfae5] text-[#04250e]',
   negative: 'bg-[#ffedea] text-[#831c1e]',
   warning: 'bg-[#fff6dd] text-[#7a3a0c]',

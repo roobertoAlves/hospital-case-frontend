@@ -6,24 +6,24 @@
 @theme {
   --font-sans: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
 
-  --color-frame: #edf3f2;
+  --color-frame: #eef2f7;
   --color-surface: #ffffff;
-  --color-raised: #f4f7f6;
-  --color-active: #e0eae8;
-  --color-line: #e2e8e6;
-  --color-rule: #eef2f1;
-  --color-control: #c7cfcd;
-  --color-ink: #121615;
-  --color-muted: #535b59;
-  --color-faint: #6b7371;
+  --color-raised: #f4f6fa;
+  --color-active: #e1e7f1;
+  --color-line: #e1e6ee;
+  --color-rule: #edf1f6;
+  --color-control: #c5ccd8;
+  --color-ink: #111723;
+  --color-muted: #4f5869;
+  --color-faint: #687284;
 
-  --color-brand-50: #e8f5f2;
-  --color-brand-100: #cdeae4;
-  --color-brand-200: #9fd5ca;
-  --color-brand-500: #129383;
-  --color-brand-600: #0e7c70;
-  --color-brand-700: #0b6359;
-  --color-brand-900: #063a34;
+  --color-brand-50: #edf2fa;
+  --color-brand-100: #d6e1f2;
+  --color-brand-200: #a9bfe3;
+  --color-brand-500: #2d5193;
+  --color-brand-600: #1f3c71;
+  --color-brand-700: #18305c;
+  --color-brand-900: #0d1b36;
 
   --color-positive: #1e7b4f;
   --color-negative: #c4242a;
@@ -33,7 +33,7 @@
   --radius-card: 12px;
   --radius-control: 8px;
 
-  --shadow-card: 0 1px 2px rgb(18 22 21 / 0.04), 0 4px 16px rgb(18 22 21 / 0.05);
+  --shadow-card: 0 1px 2px rgb(17 23 35 / 0.04), 0 4px 16px rgb(17 23 35 / 0.06);
 }
 
 @layer base {
