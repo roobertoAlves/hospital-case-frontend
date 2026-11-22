@@ -65,7 +65,7 @@ export default function Tickets() {
     }
   }
 
-  if (loading && !data) return <Loading />
+  if (loading && !data) return <Loading variant="table" />
   if (error || !data) return <Empty>{error?.message}</Empty>
   const c = data.counts
   const shown = teamFilter ? data.tickets.filter((t) => t.equipe === teamFilter) : data.tickets

@@ -29,7 +29,7 @@ export default function Specialties() {
     catch (err) { notify(err instanceof ApiError ? err.message : 'Não foi possível alterar.', false) }
   }
 
-  if (loading && !data) return <Loading />
+  if (loading && !data) return <Loading variant="table" />
   if (error || !data) return <Empty>{error?.message}</Empty>
   const list = data.specialties
   const activeOnes = list.filter((e) => String(e.ativo) === '1').length

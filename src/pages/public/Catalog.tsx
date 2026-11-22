@@ -70,7 +70,7 @@ export default function Catalog() {
       {tab === 'exames' && <Chips options={categories} current={category} onChange={setCategory} label={categoryLabel} />}
       {tab === 'vacinas' && <Chips options={RANGES} current={category} onChange={setCategory} />}
 
-      {loading && !data ? <Loading /> : error || !data ? <Empty>{error?.message}</Empty> : (
+      {loading && !data ? <Loading variant="cards" /> : error || !data ? <Empty>{error?.message}</Empty> : (
         <>
           {tab === 'consultas' && (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

@@ -26,7 +26,7 @@ export default function ExamCatalog() {
     return (data?.items ?? []).filter((i) => !t || `${i.nome} ${i.codigo} ${i.categoria} ${i.local}`.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().includes(t))
   }, [data, q])
 
-  if (loading && !data) return <Loading />
+  if (loading && !data) return <Loading variant="table" />
   if (error || !data) return <Empty>{error?.message}</Empty>
 
   const nextCode = (category: string) => {

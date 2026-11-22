@@ -4,7 +4,7 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "rewrites": [
-    { "source": "/hospital-case-backend/:path*", "destination": "https://backend-production-b60b218a.up.railway.app/hospital-case-backend/:path*" },
+    { "source": "/hospital-case-backend/:path*", "destination": "https://asklep-backend.onrender.com/hospital-case-backend/:path*" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

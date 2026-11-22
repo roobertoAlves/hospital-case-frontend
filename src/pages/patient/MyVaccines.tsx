@@ -30,7 +30,7 @@ export default function MyVaccines() {
     get<Slot[]>('api/vaccines/slots', { date: day }).then((r) => setSlots(r.data)).catch(() => setSlots([])).finally(() => setLoadingSlots(false))
   }, [day, vaccine])
 
-  if (loading && !data) return <Loading />
+  if (loading && !data) return <Loading variant="list" />
   if (error || !data) return <Empty>{error?.message}</Empty>
 
   const byVaccine = data.catalog.map((v) => ({ v, doses: data.administered.filter((a) => a.id_vacina === v.id_vacina) })).filter((x) => x.doses.length > 0)

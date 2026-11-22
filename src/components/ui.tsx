@@ -194,10 +194,222 @@ export function Empty({ children, icon: Icon }: { children: ReactNode; icon?: Co
   )
 }
 
-export function Loading({ text = 'Carregando…' }: { text?: string }) {
+export function Skeleton({ className }: { className?: string }) {
+  return <span aria-hidden className={cx('block animate-pulse rounded-md bg-line/70', className)} />
+}
+
+function SkeletonPanel({ lines = 4, className }: { lines?: number; className?: string }) {
   return (
-    <div className="flex items-center gap-2 py-10 text-muted" role="status">
-      <Loader2 className="size-4 animate-spin" /> {text}
+    <div className={cx('rounded-[var(--radius-card)] border border-line bg-surface p-5', className)}>
+      <Skeleton className="mb-5 h-4 w-32" />
+      <div className="space-y-3">
+        {Array.from({ length: lines }, (_, i) => <Skeleton key={i} className={cx('h-3.5', ['w-full', 'w-11/12', 'w-4/5', 'w-2/3', 'w-3/4'][i % 5])} />)}
+      </div>
+    </div>
+  )
+}
+
+function SkeletonHeader() {
+  return (
+    <div className="mb-6 flex items-end justify-between gap-4">
+      <div className="grid gap-2.5">
+        <Skeleton className="h-3 w-28" />
+        <Skeleton className="h-7 w-64 max-w-full" />
+        <Skeleton className="h-3.5 w-96 max-w-full" />
+      </div>
+      <Skeleton className="hidden h-10 w-36 rounded-[var(--radius-control)] sm:block" />
+    </div>
+  )
+}
+
+export type LoadingVariant = 'page' | 'table' | 'document' | 'inline' | 'dashboard' | 'form' | 'cards' | 'list'
+
+function SkeletonLines({ widths }: { widths: string[] }) {
+  return <div className="space-y-2.5">{widths.map((w, i) => <Skeleton key={i} className={cx('h-3.5', w)} />)}</div>
+}
+
+export function Loading({ text = 'Carregando…', variant = 'page' }: { text?: string; variant?: LoadingVariant }) {
+  const label = <span className="sr-only">{text}</span>
+  if (variant === 'inline') {
+    return (
+      <div className="flex items-center gap-2 py-6 text-muted" role="status" aria-busy="true">
+        <Loader2 className="size-4 animate-spin" /> {text}
+      </div>
+    )
+  }
+  if (variant === 'document') {
+    return (
+      <div className="mx-auto max-w-[760px] rounded-[var(--radius-card)] bg-surface p-10 shadow-[var(--shadow-card)]" role="status" aria-busy="true">
+        {label}
+        <div className="flex items-center justify-between border-b border-line pb-5">
+          <div className="flex items-center gap-3"><Skeleton className="size-10 rounded-xl" /><Skeleton className="h-4 w-48" /></div>
+          <Skeleton className="h-4 w-24" />
+        </div>
+        <Skeleton className="mx-auto mt-10 h-6 w-56" />
+        <div className="mt-10 space-y-3">{['w-full', 'w-full', 'w-5/6', 'w-2/3'].map((w, i) => <Skeleton key={i} className={cx('h-4', w)} />)}</div>
+        <div className="mt-24 flex justify-end"><Skeleton className="h-10 w-64" /></div>
+      </div>
+    )
+  }
+  if (variant === 'dashboard') {
+    return (
+      <div role="status" aria-busy="true">
+        {label}
+        <SkeletonHeader />
+        <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-5">
+          {Array.from({ length: 5 }, (_, i) => (
+            <div key={i} className="rounded-[var(--radius-card)] border border-line bg-surface p-4">
+              <Skeleton className="h-3 w-24" /><Skeleton className="mt-3 h-7 w-12" />
+            </div>
+          ))}
+        </div>
+        <div className="grid gap-5 xl:grid-cols-[2fr_1fr]"><SkeletonPanel lines={6} /><SkeletonPanel lines={4} /></div>
+      </div>
+    )
+  }
+  if (variant === 'form') {
+    return (
+      <div role="status" aria-busy="true" className="max-w-[1100px]">
+        {label}
+        <SkeletonHeader />
+        {Array.from({ length: 3 }, (_, s) => (
+          <div key={s} className="grid gap-6 border-b border-line py-6 md:grid-cols-[260px_1fr]">
+            <div className="grid content-start gap-2"><Skeleton className="h-4 w-32" /><Skeleton className="h-3 w-52" /></div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              {Array.from({ length: s === 0 ? 2 : 4 }, (_, i) => (
+                <div key={i} className="grid gap-2"><Skeleton className="h-3 w-24" /><Skeleton className="h-10 w-full rounded-[var(--radius-control)]" /></div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    )
+  }
+  if (variant === 'cards') {
+    return (
+      <div role="status" aria-busy="true">
+        {label}
+        <div className="mb-6 grid gap-2.5"><Skeleton className="h-8 w-56" /><Skeleton className="h-3.5 w-40" /></div>
+        <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4">
+          {Array.from({ length: 4 }, (_, i) => (
+            <div key={i} className="rounded-[var(--radius-card)] border border-line bg-surface p-5">
+              <Skeleton className="size-10 rounded-xl" /><Skeleton className="mt-4 h-4 w-28" />
+            </div>
+          ))}
+        </div>
+        <div className="grid gap-5 lg:grid-cols-2"><SkeletonPanel lines={4} /><SkeletonPanel lines={4} /></div>
+      </div>
+    )
+  }
+  if (variant === 'list') {
+    return (
+      <div role="status" aria-busy="true">
+        {label}
+        <SkeletonHeader />
+        <div className="rounded-[var(--radius-card)] border border-line bg-surface p-5">
+          <Skeleton className="mb-5 h-4 w-32" />
+          {Array.from({ length: 4 }, (_, i) => (
+            <div key={i} className="flex items-center gap-4 border-b border-rule py-4 last:border-0">
+              <Skeleton className="h-12 w-14 rounded-xl" />
+              <div className="grid grow gap-2"><Skeleton className="h-4 w-48 max-w-full" /><Skeleton className="h-3 w-64 max-w-full" /></div>
+              <Skeleton className="h-6 w-24 rounded-full" />
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+  if (variant === 'table') {
+    return (
+      <div role="status" aria-busy="true">
+        {label}
+        <SkeletonHeader />
+        <div className="rounded-[var(--radius-card)] border border-line bg-surface">
+          <div className="flex gap-6 border-b border-line px-4 py-3">{['w-20', 'w-40', 'w-32', 'w-24'].map((w, i) => <Skeleton key={i} className={cx('h-3', w)} />)}</div>
+          {Array.from({ length: 7 }, (_, i) => (
+            <div key={i} className="flex items-center gap-6 border-b border-rule px-4 py-4 last:border-0">
+              <Skeleton className="h-3.5 w-14" />
+              <div className="grid grow gap-2"><Skeleton className="h-3.5 w-48 max-w-full" /><Skeleton className="h-3 w-32" /></div>
+              <Skeleton className="hidden h-3.5 w-28 md:block" />
+              <Skeleton className="h-6 w-24 rounded-full" />
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+  return (
+    <div role="status" aria-busy="true">
+      {label}
+      <SkeletonHeader />
+      <div className="grid gap-5 xl:grid-cols-[2fr_1fr]">
+        <div className="grid content-start gap-5"><SkeletonPanel lines={5} /><SkeletonPanel lines={3} /></div>
+        <div className="grid content-start gap-5"><SkeletonPanel lines={4} /><SkeletonPanel lines={2} /></div>
+      </div>
+    </div>
+  )
+}
+
+export function PublicSkeleton() {
+  return (
+    <div className="min-h-screen bg-surface" role="status" aria-busy="true">
+      <span className="sr-only">Carregando…</span>
+      <div className="border-b border-line">
+        <div className="mx-auto flex h-16 max-w-[1200px] items-center justify-between px-4 sm:px-6">
+          <div className="flex items-center gap-6"><Skeleton className="h-8 w-28 rounded-xl" /><Skeleton className="hidden h-4 w-64 md:block" /></div>
+          <Skeleton className="h-10 w-32 rounded-full" />
+        </div>
+      </div>
+      <div className="bg-gradient-to-b from-brand-50 to-surface">
+        <div className="mx-auto grid max-w-[1200px] items-center gap-12 px-4 py-16 sm:px-6 md:py-24 lg:grid-cols-[1.1fr_1fr]">
+          <div className="grid gap-4">
+            <Skeleton className="h-7 w-72 max-w-full rounded-full" />
+            <Skeleton className="h-12 w-full" /><Skeleton className="h-12 w-4/5" />
+            <SkeletonLines widths={['w-full', 'w-3/4']} />
+            <Skeleton className="mt-2 h-14 w-full rounded-full" />
+            <div className="flex gap-3"><Skeleton className="h-12 w-36 rounded-full" /><Skeleton className="h-12 w-36 rounded-full" /></div>
+          </div>
+          <div className="grid gap-4">
+            {Array.from({ length: 3 }, (_, i) => (
+              <div key={i} className="flex items-center gap-4 rounded-[var(--radius-sheet)] border border-line bg-surface p-6">
+                <Skeleton className="size-12 rounded-xl" /><div className="grid grow gap-2"><Skeleton className="h-4 w-32" /><Skeleton className="h-3 w-full" /></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export function PortalSkeleton() {
+  return (
+    <div className="min-h-screen bg-frame" role="status" aria-busy="true">
+      <span className="sr-only">Carregando…</span>
+      <div className="border-b border-line bg-surface">
+        <div className="mx-auto flex h-16 max-w-[1120px] items-center gap-6 px-4 sm:px-6">
+          <Skeleton className="h-8 w-28 rounded-xl" />
+          <div className="hidden gap-3 md:flex">{Array.from({ length: 6 }, (_, i) => <Skeleton key={i} className="h-8 w-24 rounded-full" />)}</div>
+          <Skeleton className="ml-auto size-9 rounded-full" />
+        </div>
+      </div>
+      <div className="mx-auto max-w-[1120px] px-4 py-7 sm:px-6"><Loading variant="cards" /></div>
+    </div>
+  )
+}
+
+export function AppShellSkeleton() {
+  return (
+    <div className="flex min-h-screen bg-frame" role="status" aria-busy="true">
+      <span className="sr-only">Carregando…</span>
+      <aside className="hidden w-60 shrink-0 flex-col gap-3 p-5 md:flex">
+        <div className="mb-6 flex items-center gap-2"><Skeleton className="size-9 rounded-xl" /><Skeleton className="h-4 w-24" /></div>
+        {Array.from({ length: 7 }, (_, i) => <Skeleton key={i} className="h-8 w-full rounded-lg" />)}
+      </aside>
+      <main className="grow p-4 md:p-6">
+        <div className="mb-5 flex items-center justify-between"><Skeleton className="h-10 w-80 max-w-[60%] rounded-full" /><Skeleton className="size-9 rounded-full" /></div>
+        <div className="rounded-[var(--radius-sheet)] bg-surface p-6"><Loading /></div>
+      </main>
     </div>
   )
 }

@@ -38,7 +38,7 @@ export default function Exams() {
           {canChange && <ButtonLink to="/exames/novo" variant="primario" icon={FlaskConical}>Agendar exame</ButtonLink>}
         </>}
       />
-      {loading && !data ? <Loading /> : error ? <Empty>{error.message}</Empty> : (
+      {loading && !data ? <Loading variant="table" /> : error ? <Empty>{error.message}</Empty> : (
         <div className="grid gap-5">
           {(data?.locations ?? []).map((l, i) => {
             const atLocation = exams.filter((x) => x.id_local === l.id_local)

@@ -42,7 +42,7 @@ export default function Appointments() {
           {can('consultas.agendar') && <ButtonLink to="/agenda/nova" variant="primario" icon={CalendarPlus}>Agendar consulta</ButtonLink>}
         </>}
       />
-      {loading && !data ? <Loading /> : error ? <Empty>{error.message}</Empty> : data && (
+      {loading && !data ? <Loading variant="table" /> : error ? <Empty>{error.message}</Empty> : data && (
         <div className="grid gap-5">
           {data.doctors.length > 0 && (
             <Panel title="Linha do dia" meta="uma linha por médico">

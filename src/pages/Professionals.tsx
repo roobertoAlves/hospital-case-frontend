@@ -47,7 +47,7 @@ export default function Professionals() {
         <label className="flex items-center gap-2 text-muted"><input type="checkbox" className="size-4 accent-ink" checked={inactive} onChange={(e) => change('inactive', e.target.checked ? '1' : '')} /> Incluir inativos</label>
         <Button type="submit">Filtrar</Button>
       </form>
-      {loading && !data ? <Loading /> : error ? <Empty>{error.message}</Empty> : list.length === 0 ? <Empty>Nenhum profissional com esse filtro.</Empty> : (
+      {loading && !data ? <Loading variant="table" /> : error ? <Empty>{error.message}</Empty> : list.length === 0 ? <Empty>Nenhum profissional com esse filtro.</Empty> : (
         <Panel noPadding>
           <Table header={<><Th>Profissional</Th><Th>Tipo</Th><Th className="num">Registro</Th><Th className="hidden lg:table-cell">Acesso ao sistema</Th><Th className="hidden md:table-cell">Situação</Th><Th /></>}>
             {list.map((p) => {

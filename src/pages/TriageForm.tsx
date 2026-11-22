@@ -34,7 +34,7 @@ export default function TriageForm() {
     f.setValues(v)
   }, [data])
 
-  if (loading && !data) return <Loading />
+  if (loading && !data) return <Loading variant="form" />
   if (error?.code === 'ERR_ETAPA') return <Empty>Esta triagem ainda não foi iniciada ou já não está disponível. <ButtonLink to="/triagem" variant="texto">Voltar à fila</ButtonLink></Empty>
   if (error || !data) return <Empty>{error?.message ?? 'Consulta não encontrada.'}</Empty>
 

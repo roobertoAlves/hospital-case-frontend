@@ -25,7 +25,7 @@ export default function MedicalOrders() {
     <>
       <PageHeader title="Pedidos médicos" subtitle="Pedidos anexados pelos pacientes no portal. Confira o arquivo: recusar cancela o exame que dependia dele e avisa o paciente." />
       <Tabs tabs={[{ id: 'pendente', label: 'Aguardando conferência' }, { id: 'aprovado', label: 'Aprovados' }, { id: 'recusado', label: 'Recusados' }]} current={status} onChange={setStatus} />
-      {loading && !data ? <Loading /> : error || !data ? <Empty>{error?.message}</Empty> : data.orders.length === 0 ? (
+      {loading && !data ? <Loading variant="table" /> : error || !data ? <Empty>{error?.message}</Empty> : data.orders.length === 0 ? (
         <Empty icon={FileSearch}>{status === 'pendente' ? 'Nenhum pedido aguardando conferência.' : 'Nada por aqui.'}</Empty>
       ) : (
         <div className="grid gap-4">
