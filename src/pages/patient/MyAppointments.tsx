@@ -76,7 +76,7 @@ export default function MyAppointments() {
     catch (e) { notify(e instanceof ApiError ? e.message : 'Não foi possível concluir.', false); return false }
   }
 
-  if (loading && !data) return <Loading />
+  if (loading && !data) return <Loading variant="list" />
   if (error || !data) return <Empty>{error?.message}</Empty>
   const n = new Date()
   const now = `${todayIso()}T${String(n.getHours()).padStart(2, '0')}:${String(n.getMinutes()).padStart(2, '0')}`

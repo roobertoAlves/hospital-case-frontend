@@ -46,7 +46,6 @@ export function PublicScreen({ title, subtitle, children }: { title: string; sub
             ))}
           </div>
         </div>
-        <p className="relative mt-10 text-[12px] text-brand-200">O nome vem de Asclépio, o deus grego da medicina, cujo bastão com uma serpente virou símbolo da profissão.</p>
       </section>
       <section className="flex items-center justify-center bg-surface px-6 py-12">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: 'easeOut' }} className="w-full max-w-[380px]">
@@ -101,7 +100,7 @@ export function Login() {
       </form>
       <div className="mt-10 rounded-[var(--radius-card)] bg-raised p-4 text-[12px] leading-relaxed text-muted">
         <p className="mb-1 flex items-center gap-1.5 font-medium text-ink"><Stethoscope className="size-3.5" /> Ambiente de demonstração</p>
-        Paciente: paciente@hospital.local / paciente123<br />Equipe: recepcao@, enfermeiro@, medico@, admin@hospital.local<br />Senhas: recepcao123, enfermeiro123, medico123, admin123 (dados fictícios).
+        Paciente: paciente@hospital.local / paciente123<br />Equipe: recepcao@, enfermeiro@, medico@, admin@hospital.local<br />Senhas: recepcao123, enfermeiro123, medico123, admin123.
       </div>
     </PublicScreen>
   )

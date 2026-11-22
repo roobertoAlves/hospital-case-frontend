@@ -39,7 +39,7 @@ export default function MyExams() {
     get<Slot[]>('api/exams/slots', { type: type, date: day }).then((r) => setSlots(r.data)).catch(() => setSlots([])).finally(() => setLoadingSlots(false))
   }, [type, day])
 
-  if (loading && !data) return <Loading />
+  if (loading && !data) return <Loading variant="list" />
   if (error || !data) return <Empty>{error?.message}</Empty>
   const t = data.types.find((x) => String(x.id_tipo_exame) === type)
   const requires = String(t?.exige_pedido) === '1'

@@ -26,7 +26,7 @@ export default function CertificatePrint({ portal = false }: { portal?: boolean 
   const { id } = useParams()
   const navigate = useNavigate()
   const { data, loading, error } = useApi<{ certificate: Row }>(portal ? `api/portal/certificates/${id}` : `api/certificates/${id}`)
-  if (loading && !data) return <div className="p-8"><Loading /></div>
+  if (loading && !data) return <div className="p-8"><Loading variant="document" /></div>
   if (error || !data) return <div className="p-8"><Empty>{error?.message ?? 'Atestado não encontrado.'}</Empty></div>
   const a = data.certificate
   const cancelled = a.status === 'cancelado'
@@ -45,7 +45,7 @@ export default function CertificatePrint({ portal = false }: { portal?: boolean 
             <LogoMark className="size-10" />
             <div>
               <p className="text-[18px] font-semibold">Asklep · Clínica unidade central</p>
-              <p className="text-[12px] text-muted">Documento de demonstração (dados fictícios)</p>
+              <p className="text-[12px] text-muted">Documento de demonstração</p>
             </div>
           </div>
           <div className="text-right text-[13px]">

@@ -27,7 +27,7 @@ function Users({ groups }: { groups: Row[] }) {
     try { const r = await post(url, body); notify(r.message ?? 'Feito.'); reload() }
     catch (e) { notify(e instanceof ApiError ? e.message : 'Não foi possível concluir.', false) }
   }
-  if (loading && !data) return <Loading />
+  if (loading && !data) return <Loading variant="table" />
   if (error || !data) return <Empty>{error?.message}</Empty>
   const list = data.filter((u) => {
     const t = [u.nome, u.email, u.grupos, u.profissional].join(' ').toLowerCase()
@@ -173,7 +173,7 @@ export default function Admin() {
       <PageHeader title="Usuários e permissões" subtitle="Grupos, situação das contas e matriz de permissões."
         actions={<><ButtonLink to="/profissionais" icon={IdCard}>Profissionais</ButtonLink><ButtonLink to="/auditoria" icon={FileText}>Auditoria</ButtonLink></>} />
       <Tabs tabs={[{ id: 'users', label: 'Usuários' }, { id: 'permissions', label: 'Permissões por grupo' }]} current={tab} onChange={setTab} />
-      {loading && !data ? <Loading /> : error || !data ? <Empty>{error?.message}</Empty>
+      {loading && !data ? <Loading variant="table" /> : error || !data ? <Empty>{error?.message}</Empty>
         : tab === 'users' ? <Users groups={data.groups} /> : <PermissionMatrix matrix={data} onSave={reload} />}
     </>
   )

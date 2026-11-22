@@ -41,7 +41,7 @@ export default function ProfessionalForm() {
     setRanges(((p.availability as Row[]) ?? []).map((x) => ({ dia_semana: String(x.dia_semana), hora_inicio: String(x.hora_inicio), hora_fim: String(x.hora_fim) })))
   }, [data])
 
-  if (loading && !data) return <Loading />
+  if (loading && !data) return <Loading variant="form" />
   if (error || !data) return <Empty>{error?.message ?? 'Profissional não encontrado.'}</Empty>
   const p = data.professional
   const type = f.values.tipo || 'medico'

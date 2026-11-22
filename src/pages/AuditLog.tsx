@@ -30,7 +30,7 @@ function AuditTrailTab() {
   const applyFilter = (e: FormEvent) => { e.preventDefault(); const n = new URLSearchParams(); Object.entries(f).forEach(([k, v]) => v && k !== 'page' && n.set(k, v)); setParams(n) }
   const page = (p: number) => { const n = new URLSearchParams(params); n.set('page', String(p)); setParams(n) }
 
-  if (loading && !data) return <Loading />
+  if (loading && !data) return <Loading variant="table" />
   if (error || !data) return <Empty>{error?.message}</Empty>
   const r = data
   const total = Math.max(1, r.total_pages)
@@ -81,7 +81,7 @@ function AuditTrailTab() {
 
 function Notifications() {
   const { data, loading, error } = useApi<{ notifications: Row[] }>('api/audit-log/notifications')
-  if (loading && !data) return <Loading />
+  if (loading && !data) return <Loading variant="table" />
   if (error || !data) return <Empty>{error?.message}</Empty>
   const tone = (s: unknown) => (s === 'enviada' ? 'positive' : s === 'simulada' ? 'accent' : s === 'falhou' ? 'negative' : 'neutral') as 'positive'
   return (

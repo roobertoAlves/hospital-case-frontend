@@ -26,7 +26,7 @@ export default function TriageQueue() {
     } finally { setStarting(null) }
   }
 
-  if (loading && !data) return <Loading />
+  if (loading && !data) return <Loading variant="table" />
   if (error || !data) return <Empty>{error?.message}</Empty>
   const waiting = data.queue.filter((c) => c.status === 'aguardando_triagem').length
 
