@@ -42,9 +42,9 @@ export function PatientLayout() {
           </motion.div>
         </AnimatePresence>
       </main>
-      <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-line bg-surface md:hidden" aria-label="Minha saúde">
+      <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-6 border-t border-line bg-surface md:hidden" aria-label="Minha saúde">
         {TABS.map((a) => (
-          <NavLink key={a.to} to={a.to} end={a.to === '/minha-saude'} className={({ isActive }) => cx('flex flex-col items-center gap-0.5 py-2 text-[11px]', isActive ? 'text-brand-700' : 'text-muted')}>
+          <NavLink key={a.to} to={a.to} end={a.to === '/minha-saude'} className={({ isActive }) => cx('flex min-w-0 flex-col items-center gap-0.5 px-0.5 py-2 text-[10px] leading-tight', isActive ? 'text-brand-700' : 'text-muted')}>
             <a.icone className="size-5" />{a.rotulo}
           </NavLink>
         ))}

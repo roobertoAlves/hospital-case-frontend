@@ -153,7 +153,7 @@ export default function MyExams() {
                         <Badge tone={tone}>{label}</Badge>
                       </div>
                       <p className="text-[12px] text-muted">{String(s.medico)} · {formatDate(s.solicitado_em)}{s.justificativa ? ` · ${s.justificativa}` : ''}</p>
-                      {open && <Button small variant="texto" className="mt-1 px-0" onClick={() => { setMark(true); setType(String(s.id_tipo_exame)); setOrigin(`s:${s.id_exame}`); window.scrollTo({ top: 0, behavior: 'smooth' }) }}>Marcar este exame</Button>}
+                      {open && <button type="button" className="mt-1 text-[13px] font-medium text-brand-700 hover:underline" onClick={() => { setMark(true); setType(String(s.id_tipo_exame)); setOrigin(`s:${s.id_exame}`); window.scrollTo({ top: 0, behavior: 'smooth' }) }}>Marcar este exame</button>}
                     </li>
                   )
                 })}
