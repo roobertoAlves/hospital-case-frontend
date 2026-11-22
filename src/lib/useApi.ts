@@ -1,27 +1,36 @@
-import { useCallback, useEffect, useState } from 'react'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { useCallback } from 'react'
 import { ApiError, get } from './api'
+import { queryClient } from './queryClient'
 
-export function useApi<T>(path: string | null, params?: Record<string, string | number | boolean | null | undefined>) {
-  const [data, setData] = useState<T | null>(null)
-  const [error, setError] = useState<ApiError | null>(null)
-  const [loading, setLoading] = useState(true)
-  const key = path === null ? null : path + JSON.stringify(params ?? {})
+type Params = Record<string, string | number | boolean | null | undefined>
 
-  const reload = useCallback(async () => {
-    if (path === null) return
-    setLoading(true)
-    try {
-      const r = await get<T>(path, params)
-      setData(r.data)
-      setError(null)
-    } catch (e) {
-      setError(e instanceof ApiError ? e : new ApiError(0, 'ERR', String(e)))
-    } finally {
-      setLoading(false)
-    }
-  }, [key])
+export function useApi<T>(path: string | null, params?: Params) {
+  const queryKey = ['api', path, params ?? {}] as const
+  const query = useQuery<T, ApiError>({
+    queryKey,
+    enabled: path !== null,
+    placeholderData: keepPreviousData,
+    queryFn: async ({ signal }) => {
+      try {
+        return (await get<T>(path as string, params, signal)).data
+      } catch (e) {
+        throw e instanceof ApiError ? e : new ApiError(0, 'ERR', String(e))
+      }
+    },
+  })
 
-  useEffect(() => { reload() }, [reload])
+  const { refetch } = query
+  const reload = useCallback(async () => { await refetch() }, [refetch])
+  const setData = useCallback((value: T | null) => {
+    queryClient.setQueryData(queryKey, value ?? undefined)
+  }, [JSON.stringify(queryKey)])
 
-  return { data, error, loading, reload, setData }
+  return {
+    data: query.data ?? null,
+    error: query.error ?? null,
+    loading: query.isPending || query.isFetching,
+    reload,
+    setData,
+  }
 }
