@@ -45,7 +45,7 @@ export default function CertificatePrint({ portal = false }: { portal?: boolean 
             <LogoMark className="size-10" />
             <div>
               <p className="text-[18px] font-semibold">Asklep · Clínica unidade central</p>
-              <p className="text-[12px] text-muted">Documento de demonstração (dados fictícios)</p>
+              <p className="text-[12px] text-muted">Documento de demonstração</p>
             </div>
           </div>
           <div className="text-right text-[13px]">

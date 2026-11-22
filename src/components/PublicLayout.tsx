@@ -46,7 +46,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
           <div>
             <Logo />
             <p className="mt-4 max-w-[420px] text-[13px] leading-relaxed text-muted">
-              Clínica unidade central (fictícia). Projeto acadêmico: todos os nomes, médicos e pacientes são dados de demonstração.
+              Clínica unidade central. Projeto acadêmico: todos os nomes, médicos e pacientes são dados de demonstração.
             </p>
           </div>
           <div>
