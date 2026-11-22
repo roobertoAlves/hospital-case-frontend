@@ -42,7 +42,7 @@ export default function VaccinationRoom() {
           {can('vacinas.agendar') && <Button variant="primario" icon={Syringe} onClick={() => setIsNew((n) => !n)}>Agendar vacina</Button>}
         </>} />
       {isNew && data && <NewBooking vaccines={data.vaccines} onBook={() => { setIsNew(false); reload() }} />}
-      {loading && !data ? <Loading /> : error ? <Empty>{error.message}</Empty> : list.length === 0 ? <Empty icon={Syringe}>Nenhuma vacina agendada neste dia.</Empty> : (
+      {loading && !data ? <Loading variant="table" /> : error ? <Empty>{error.message}</Empty> : list.length === 0 ? <Empty icon={Syringe}>Nenhuma vacina agendada neste dia.</Empty> : (
         <Panel noPadding>
           <Table header={<><Th className="w-20">Hora</Th><Th>Paciente</Th><Th>Vacina</Th><Th className="hidden md:table-cell">Origem</Th><Th>Situação</Th><Th /></>}>
             {list.map((a) => (

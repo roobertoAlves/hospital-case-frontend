@@ -54,7 +54,7 @@ export default function Patients() {
         {(q || inactive) && <ButtonLink to="/pacientes" variant="texto">Limpar</ButtonLink>}
       </form>
 
-      {loading && !data ? <Loading /> : error ? <Empty>{error.message}</Empty> : r && r.items.length === 0 ? (
+      {loading && !data ? <Loading variant="table" /> : error ? <Empty>{error.message}</Empty> : r && r.items.length === 0 ? (
         <Empty icon={Users}>{q ? 'Nenhum paciente com esse nome ou CPF.' : 'Nenhum paciente cadastrado ainda.'}</Empty>
       ) : r && (
         <Panel noPadding>

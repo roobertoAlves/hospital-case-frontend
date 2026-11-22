@@ -11,7 +11,7 @@ export default function PrescriptionPrint({ portal = false }: { portal?: boolean
   const { id } = useParams()
   const navigate = useNavigate()
   const { data, loading, error } = useApi<{ prescription: Row }>(portal ? `api/portal/prescriptions/${id}` : `api/prescriptions/${id}`)
-  if (loading && !data) return <div className="p-8"><Loading /></div>
+  if (loading && !data) return <div className="p-8"><Loading variant="document" /></div>
   if (error || !data) return <div className="p-8"><Empty>{error?.message ?? 'Receita não encontrada.'}</Empty></div>
   const r = data.prescription
   const cancelled = r.status === 'cancelada'

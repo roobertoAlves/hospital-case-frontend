@@ -6,7 +6,7 @@ interface TeamData { users: number; open_tickets: number; files: number; members
 
 export default function Team() {
   const { data, loading, error } = useApi<TeamData>('api/dashboard/team')
-  if (loading && !data) return <Loading />
+  if (loading && !data) return <Loading variant="table" />
   if (error || !data) return <Empty>{error?.message}</Empty>
   return (
     <>

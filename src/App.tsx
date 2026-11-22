@@ -3,7 +3,7 @@ import { createBrowserRouter, Navigate, RouterProvider, useLocation } from 'reac
 import { Layout } from './components/Layout'
 import { PatientLayout } from './components/PatientLayout'
 import { PublicLayout } from './components/PublicLayout'
-import { Loading, Empty } from './components/ui'
+import { AppShellSkeleton, Loading, Empty } from './components/ui'
 import { homeFor } from './lib/menu'
 import { useSession, type User } from './lib/session'
 import { Login, ForgotPassword, ResetPassword, ChangePassword } from './pages/Access'
@@ -50,7 +50,7 @@ export const isPatient = (u: User | null) => !!u && u.groups.includes('paciente'
 function Protected({ children }: { children: ReactNode }) {
   const { loading, user } = useSession()
   const local = useLocation()
-  if (loading) return <div className="p-8"><Loading /></div>
+  if (loading) return <AppShellSkeleton />
   if (!user) return <Navigate to="/login" replace state={{ de: local.pathname }} />
   if (user.primeiro_acesso) return <Navigate to="/trocar-senha" replace />
   if (isPatient(user)) return <Navigate to="/minha-saude" replace />
@@ -59,7 +59,7 @@ function Protected({ children }: { children: ReactNode }) {
 
 function PatientOnly({ children }: { children: ReactNode }) {
   const { loading, user } = useSession()
-  if (loading) return <div className="p-8"><Loading /></div>
+  if (loading) return <AppShellSkeleton />
   if (!user) return <Navigate to="/login" replace />
   if (!isPatient(user)) return <Navigate to={homeFor(user.groups)} replace />
   return <>{children}</>
@@ -67,7 +67,7 @@ function PatientOnly({ children }: { children: ReactNode }) {
 
 function Root() {
   const { loading, user } = useSession()
-  if (loading) return <div className="p-8"><Loading /></div>
+  if (loading) return <AppShellSkeleton />
   if (!user) return <PublicLayout><Suspense fallback={<Loading />}><Home /></Suspense></PublicLayout>
   return <Navigate to={isPatient(user) ? '/minha-saude' : homeFor(user.groups)} replace />
 }

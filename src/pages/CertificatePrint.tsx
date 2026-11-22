@@ -26,7 +26,7 @@ export default function CertificatePrint({ portal = false }: { portal?: boolean 
   const { id } = useParams()
   const navigate = useNavigate()
   const { data, loading, error } = useApi<{ certificate: Row }>(portal ? `api/portal/certificates/${id}` : `api/certificates/${id}`)
-  if (loading && !data) return <div className="p-8"><Loading /></div>
+  if (loading && !data) return <div className="p-8"><Loading variant="document" /></div>
   if (error || !data) return <div className="p-8"><Empty>{error?.message ?? 'Atestado não encontrado.'}</Empty></div>
   const a = data.certificate
   const cancelled = a.status === 'cancelado'
