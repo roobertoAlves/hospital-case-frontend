@@ -1,9 +1,10 @@
-import { lazy, Suspense, type ReactNode } from 'react'
+import { lazy, Suspense, useEffect, useState, type ReactNode } from 'react'
 import { createBrowserRouter, Navigate, RouterProvider, useLocation } from 'react-router'
 import { Layout } from './components/Layout'
 import { PatientLayout } from './components/PatientLayout'
 import { PublicLayout } from './components/PublicLayout'
 import { AppShellSkeleton, PortalSkeleton, PublicSkeleton, Loading, Empty } from './components/ui'
+import { onWaking } from './lib/api'
 import { homeFor } from './lib/menu'
 import { useSession, type User } from './lib/session'
 import { Login, ForgotPassword, ResetPassword, ChangePassword } from './pages/Access'
@@ -134,6 +135,20 @@ const router = createBrowserRouter([
   { path: '/atestados/:id', element: <Protected>{page(<CertificatePrint />)}</Protected> },
 ])
 
+function WakeNotice() {
+  const [on, setOn] = useState(false)
+  useEffect(() => onWaking(setOn), [])
+  if (!on) return null
+  return (
+    <div role="status" className="fixed inset-x-0 bottom-20 z-50 flex justify-center px-4 md:bottom-6">
+      <div className="flex items-center gap-3 rounded-full border border-line bg-surface px-4 py-2.5 text-[13px] shadow-xl">
+        <span className="size-2 animate-pulse rounded-full bg-brand-600" />
+        Iniciando o servidor de demonstração… pode levar até 1 minuto.
+      </div>
+    </div>
+  )
+}
+
 export default function App() {
-  return <RouterProvider router={router} />
+  return <><RouterProvider router={router} /><WakeNotice /></>
 }
