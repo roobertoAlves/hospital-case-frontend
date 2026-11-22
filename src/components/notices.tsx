@@ -1,42 +1,36 @@
 import { AnimatePresence, motion } from 'motion/react'
-import { CheckCircle2, X, XCircle } from 'lucide-react'
-import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
+import { CheckCircle2, XCircle } from 'lucide-react'
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
+import { Toaster, toast } from 'sonner'
 import { TextArea, Button, Field } from './ui'
 
-interface Notice { id: number; text: string; ok: boolean }
 const NoticeContext = createContext<(text: string, ok?: boolean) => void>(() => undefined)
 
 export function NoticesProvider({ children }: { children: ReactNode }) {
-  const [list, setList] = useState<Notice[]>([])
-  const seq = useRef(0)
   const notify = useCallback((text: string, ok = true) => {
-    const id = ++seq.current
-    setList((l) => [...l, { id, text, ok }])
-    setTimeout(() => setList((l) => l.filter((a) => a.id !== id)), ok ? 3500 : 6000)
+    if (ok) toast.success(text, { duration: 3500 })
+    else toast.error(text, { duration: 6000 })
   }, [])
   return (
     <NoticeContext.Provider value={notify}>
       {children}
-      <div className="no-print pointer-events-none fixed right-4 bottom-4 z-50 flex w-[min(380px,calc(100vw-32px))] flex-col gap-2" aria-live="polite">
-        <AnimatePresence>
-          {list.map((a) => (
-            <motion.div
-              key={a.id}
-              initial={{ opacity: 0, y: 16, scale: 0.98 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, x: 40 }}
-              transition={{ duration: 0.25, ease: 'easeOut' }}
-              className="pointer-events-auto flex items-start gap-3 rounded-[var(--radius-card)] border border-line bg-surface p-3.5 shadow-lg"
-              role={a.ok ? 'status' : 'alert'}
-            >
-              {a.ok ? <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-positive" /> : <XCircle className="mt-0.5 size-5 shrink-0 text-negative" />}
-              <span className="grow">{a.text}</span>
-              <button aria-label="Fechar aviso" onClick={() => setList((l) => l.filter((x) => x.id !== a.id))} className="text-faint hover:text-ink">
-                <X className="size-4" />
-              </button>
-            </motion.div>
-          ))}
-        </AnimatePresence>
+      <div className="no-print">
+        <Toaster
+          position="bottom-right"
+          closeButton
+          visibleToasts={4}
+          icons={{
+            success: <CheckCircle2 className="size-5 text-positive" />,
+            error: <XCircle className="size-5 text-negative" />,
+          }}
+          toastOptions={{
+            closeButtonAriaLabel: 'Fechar aviso',
+            classNames: {
+              toast: '!rounded-[var(--radius-card)] !border !border-line !bg-surface !text-ink !shadow-lg !font-[inherit] !text-[14px] !gap-3 !p-3.5',
+              closeButton: '!bg-surface !border-line !text-faint hover:!text-ink',
+            },
+          }}
+        />
       </div>
     </NoticeContext.Provider>
   )
