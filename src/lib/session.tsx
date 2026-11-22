@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { onSessionError, setCsrf, get, post } from './api'
+import { queryClient } from './queryClient'
 
 export interface User {
   id: number
@@ -45,13 +46,14 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     refresh().catch(() => setUser(null)).finally(() => setLoading(false))
     return onSessionError((e) => {
-      if (e.status === 401) setUser(null)
+      if (e.status === 401) { queryClient.clear(); setUser(null) }
       else refresh().catch(() => undefined)
     })
   }, [refresh])
 
   const login = useCallback(async (email: string, password: string) => {
     await post('api/auth/login', { email, password })
+    queryClient.clear()
     return refresh()
   }, [refresh])
 
@@ -59,6 +61,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     try {
       await post('api/auth/logout')
     } finally {
+      queryClient.clear()
       setUser(null)
       await refresh().catch(() => undefined)
     }
