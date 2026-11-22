@@ -8,9 +8,9 @@ type Row = Record<string, unknown>
 interface Catalog { specialties: Row[]; exams: Row[]; vaccines: Row[] }
 
 const SERVICES = [
-  { to: '/servicos/consultas', titulo: 'Consultas', texto: 'Escolha a especialidade e o médico, veja os horários livres e marque na hora.', icone: CalendarDays, cor: 'linear-gradient(137deg, #129383 0%, #9fd5ca 50%, #e8f5f2 100%)' },
-  { to: '/servicos/exames', titulo: 'Exames', texto: 'Preparo de cada exame, local e duração. Anexe o pedido médico pelo portal.', icone: FlaskConical, cor: 'linear-gradient(137deg, #0b6359 0%, #7dd3c0 50%, #e0f2fe 100%)' },
-  { to: '/servicos/vacinas', titulo: 'Vacinas', texto: 'Calendário de doses, agendamento na sala de vacinação e cartão digital.', icone: Syringe, cor: 'linear-gradient(137deg, #0e7c70 0%, #c7e9b0 50%, #fef9c3 100%)' },
+  { to: '/servicos/consultas', titulo: 'Consultas', texto: 'Escolha a especialidade e o médico, veja os horários livres e marque na hora.', icone: CalendarDays, cor: 'linear-gradient(137deg, #2d5193 0%, #a9bfe3 50%, #edf2fa 100%)' },
+  { to: '/servicos/exames', titulo: 'Exames', texto: 'Preparo de cada exame, local e duração. Anexe o pedido médico pelo portal.', icone: FlaskConical, cor: 'linear-gradient(137deg, #18305c 0%, #8fb0e0 50%, #e0f2fe 100%)' },
+  { to: '/servicos/vacinas', titulo: 'Vacinas', texto: 'Calendário de doses, agendamento na sala de vacinação e cartão digital.', icone: Syringe, cor: 'linear-gradient(137deg, #1f3c71 0%, #b9cbe8 50%, #fef9c3 100%)' },
 ]
 
 const STEPS = [
