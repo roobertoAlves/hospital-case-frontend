@@ -5,7 +5,7 @@ import { cx } from './ui'
 type Row = Record<string, unknown>
 
 const STATUS_COLOR: Record<string, string> = {
-  realizada: 'bg-[#bfe9cf]', cancelada: 'bg-[#f6cfcb]', ausente: 'bg-[#dfe3e2]', agendada: 'bg-brand-100',
+  realizada: 'bg-[#bfe9cf]', cancelada: 'bg-[#f6cfcb]', ausente: 'bg-[#dde2ea]', agendada: 'bg-brand-100',
   aguardando_triagem: 'bg-[#ffe3a6]', em_triagem: 'bg-[#ffe3a6]', aguardando_atendimento: 'bg-brand-200', em_atendimento: 'bg-brand-500',
 }
 
