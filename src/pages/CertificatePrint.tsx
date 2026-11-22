@@ -2,7 +2,7 @@ import { ArrowLeft, Printer } from 'lucide-react'
 import { useNavigate, useParams } from 'react-router'
 import { LogoMark } from '../components/Logo'
 import { Button, Loading, Empty } from '../components/ui'
-import { formattedCpf, formatDate, longDate } from '../lib/format'
+import { formattedCpf, formatDate } from '../lib/format'
 import { useApi } from '../lib/useApi'
 
 type Row = Record<string, unknown>
@@ -57,7 +57,7 @@ export default function CertificatePrint({ portal = false }: { portal?: boolean 
         <p className="mt-10 text-[16px] leading-8">{body(a)}</p>
         {a.cid10 ? <p className="mt-6 text-[15px]">CID-10: <strong>{String(a.cid10)}</strong> <span className="text-[12px] text-muted">(informado com autorização do paciente)</span></p> : null}
         {a.observacoes ? <p className="mt-4 whitespace-pre-wrap text-[15px]">{String(a.observacoes)}</p> : null}
-        <p className="mt-12 text-[15px]">São Paulo, {longDate(String(a.emitido_em).slice(0, 10))}.</p>
+        <p className="mt-12 text-[15px]">São Paulo, {new Date(`${String(a.emitido_em).slice(0, 10)}T12:00:00`).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })}.</p>
         <footer className="mt-24 flex justify-end">
           <div className="w-72 border-t border-ink pt-2 text-center text-[13px]">
             <p className="font-semibold">{String(a.medico)}</p>
