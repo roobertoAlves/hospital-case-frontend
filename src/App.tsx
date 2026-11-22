@@ -3,7 +3,7 @@ import { createBrowserRouter, Navigate, RouterProvider, useLocation } from 'reac
 import { Layout } from './components/Layout'
 import { PatientLayout } from './components/PatientLayout'
 import { PublicLayout } from './components/PublicLayout'
-import { AppShellSkeleton, Loading, Empty } from './components/ui'
+import { AppShellSkeleton, PortalSkeleton, PublicSkeleton, Loading, Empty } from './components/ui'
 import { homeFor } from './lib/menu'
 import { useSession, type User } from './lib/session'
 import { Login, ForgotPassword, ResetPassword, ChangePassword } from './pages/Access'
@@ -59,7 +59,7 @@ function Protected({ children }: { children: ReactNode }) {
 
 function PatientOnly({ children }: { children: ReactNode }) {
   const { loading, user } = useSession()
-  if (loading) return <AppShellSkeleton />
+  if (loading) return <PortalSkeleton />
   if (!user) return <Navigate to="/login" replace />
   if (!isPatient(user)) return <Navigate to={homeFor(user.groups)} replace />
   return <>{children}</>
@@ -67,8 +67,8 @@ function PatientOnly({ children }: { children: ReactNode }) {
 
 function Root() {
   const { loading, user } = useSession()
-  if (loading) return <AppShellSkeleton />
-  if (!user) return <PublicLayout><Suspense fallback={<Loading />}><Home /></Suspense></PublicLayout>
+  if (loading) return <PublicSkeleton />
+  if (!user) return <Suspense fallback={<PublicSkeleton />}><PublicLayout><Home /></PublicLayout></Suspense>
   return <Navigate to={isPatient(user) ? '/minha-saude' : homeFor(user.groups)} replace />
 }
 

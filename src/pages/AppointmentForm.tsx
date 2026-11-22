@@ -70,7 +70,7 @@ export default function AppointmentForm() {
     get<Slot[]>('api/appointments/slots', { doctor, date: day }).then((r) => setSlots(r.data)).catch(() => setSlots([])).finally(() => setLoadingSlots(false))
   }, [doctor, day])
 
-  if (loading && !data) return <Loading />
+  if (loading && !data) return <Loading variant="form" />
   if (error || !data) return <Empty>{error?.message ?? 'Consulta não encontrada.'}</Empty>
   const o = data.original
   const doctorName = doctors?.find((m) => String(m.id_profissional) === doctor)?.nome

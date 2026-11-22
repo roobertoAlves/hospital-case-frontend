@@ -30,7 +30,7 @@ export default function PatientForm() {
     f.setValues(v)
   }, [data])
 
-  if (editing && loading && !data) return <Loading />
+  if (editing && loading && !data) return <Loading variant="form" />
   if (editing && error) return <Empty>{error.message}</Empty>
 
   const input = (field: keyof Values, label: string, props: { required?: boolean; width?: string; inputType?: string; mask?: (v: string) => string; help?: string; max?: number } = {}) => (

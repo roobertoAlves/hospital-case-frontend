@@ -50,7 +50,7 @@ export default function ExamForm() {
     get<Slot[]>('api/exams/slots', { type: type, date: day }).then((r) => setSlots(r.data)).catch(() => setSlots([])).finally(() => setLoadingSlots(false))
   }, [type, day])
 
-  if (loading && !data) return <Loading />
+  if (loading && !data) return <Loading variant="form" />
   if (error || !data) return <Empty>{error?.message ?? 'Não foi possível carregar.'}</Empty>
   const t = data.types.find((x) => String(x.id_tipo_exame) === type)
   const ready = !!patient && !!type && !!chosenTime

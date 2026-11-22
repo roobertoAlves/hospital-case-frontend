@@ -54,7 +54,7 @@ function LinkAccount({ email, onLink }: { email?: string | null; onLink: () => v
 export default function MyHealth() {
   const { user } = useSession()
   const { data, loading, error, reload } = useApi<Summary>('api/portal/summary')
-  if (loading && !data) return <Loading />
+  if (loading && !data) return <Loading variant="cards" />
   if (error || !data) return <Empty>{error?.message}</Empty>
   if (!data.linked) return <LinkAccount email={data.record_email} onLink={reload} />
 

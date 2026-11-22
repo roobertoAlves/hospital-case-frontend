@@ -53,7 +53,7 @@ function AppointmentList({ items, empty, link }: { items: Row[]; empty: string; 
 export default function Dashboard() {
   const { user } = useSession()
   const { data, loading, error } = useApi<DashboardData>('api/dashboard')
-  if (loading && !data) return <Loading />
+  if (loading && !data) return <Loading variant="dashboard" />
   if (error) return <Empty>{error.message}</Empty>
   const p = data!
   const shortcuts = visibleItems(SHORTCUTS, user?.permissions ?? [], user?.groups ?? [])

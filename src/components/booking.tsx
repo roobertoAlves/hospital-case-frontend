@@ -69,7 +69,12 @@ export interface Slot { time: string; free: boolean }
 export function SlotGrid({ slots, loading, selected, onChoose, emptyText }: {
   slots: Slot[] | null; loading: boolean; selected: string; onChoose: (h: string) => void; emptyText?: string
 }) {
-  if (loading) return <p className="text-muted">Carregando horários…</p>
+  if (loading) return (
+    <div className="flex flex-wrap gap-2" role="status" aria-busy="true">
+      <span className="sr-only">Carregando horários…</span>
+      {Array.from({ length: 12 }, (_, i) => <span key={i} aria-hidden className="block h-9 w-[68px] animate-pulse rounded-[var(--radius-control)] bg-line/70" />)}
+    </div>
+  )
   if (!slots) return <p className="text-muted">Escolha as opções acima e a data.</p>
   if (!slots.length) return <p className="rounded-[var(--radius-card)] border border-dashed border-control px-4 py-3 text-muted">{emptyText ?? 'Sem atendimento nesse dia. Escolha outra data.'}</p>
   const freeSlots = slots.filter((h) => h.free).length

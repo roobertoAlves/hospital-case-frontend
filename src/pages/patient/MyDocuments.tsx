@@ -8,7 +8,7 @@ type Row = Record<string, unknown>
 
 export default function MyDocuments() {
   const { data, loading, error } = useApi<{ certificates: Row[]; referrals: Row[] }>('api/portal/documents')
-  if (loading && !data) return <Loading />
+  if (loading && !data) return <Loading variant="list" />
   if (error || !data) return <Empty>{error?.message}</Empty>
   return (
     <>

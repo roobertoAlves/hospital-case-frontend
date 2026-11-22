@@ -7,7 +7,7 @@ type Row = Record<string, unknown>
 
 export default function MyPrescriptions() {
   const { data, loading, error } = useApi<{ prescriptions: Row[] }>('api/portal/prescriptions')
-  if (loading && !data) return <Loading />
+  if (loading && !data) return <Loading variant="list" />
   if (error || !data) return <Empty>{error?.message}</Empty>
   return (
     <>
