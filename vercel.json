@@ -1,0 +1,10 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "vite",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "rewrites": [
+    { "source": "/hospital-case-backend/:path*", "destination": "https://backend-production-b60b218a.up.railway.app/hospital-case-backend/:path*" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
